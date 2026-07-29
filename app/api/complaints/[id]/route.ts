@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, requireAdmin, UnauthorizedError, ForbiddenError } from "@/lib/session";
-import { updateComplaintSchema } from "@/lib/validations/complaint";
+import { updateComplaintSchema, complaintStatusLabels } from "@/lib/validations/complaint";
+import { notifyUser } from "@/lib/notify";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -49,6 +50,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         resolvedAt: parsed.data.status === "RESOLVED" ? new Date() : existing.resolvedAt,
       },
     });
+
+    if (parsed.data.status && parsed.data.status !== existing.status) {
+      await notifyUser(
+        complaint.createdById,
+        "Status pengaduan diperbarui",
+        `${complaint.title}: ${complaintStatusLabels[parsed.data.status]}`,
+        `/complaints/${complaint.id}`
+      );
+    }
 
     return NextResponse.json(complaint);
   } catch (error) {

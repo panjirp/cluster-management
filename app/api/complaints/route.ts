@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, UnauthorizedError, ForbiddenError } from "@/lib/session";
 import { createComplaintSchema } from "@/lib/validations/complaint";
+import { notifyAdmins } from "@/lib/notify";
 
 export async function GET() {
   try {
@@ -35,6 +36,8 @@ export async function POST(req: NextRequest) {
     const complaint = await prisma.complaint.create({
       data: { ...parsed.data, createdById: session.user.id },
     });
+
+    await notifyAdmins("Pengaduan baru", complaint.title, `/complaints/${complaint.id}`);
 
     return NextResponse.json(complaint, { status: 201 });
   } catch (error) {

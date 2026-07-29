@@ -30,11 +30,26 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const badges = await getNavBadges(session.user.role);
 
+  const [notifications, unreadCount] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+    prisma.notification.count({ where: { userId: session.user.id, read: false } }),
+  ]);
+
   return (
     <div className="flex min-h-screen flex-1">
       <Sidebar role={session.user.role} badges={badges} />
       <div className="flex flex-1 flex-col">
-        <Navbar name={session.user.name ?? session.user.email ?? ""} role={session.user.role} badges={badges} />
+        <Navbar
+          name={session.user.name ?? session.user.email ?? ""}
+          role={session.user.role}
+          badges={badges}
+          notifications={notifications.map((n) => ({ ...n, createdAt: n.createdAt.toISOString() }))}
+          unreadCount={unreadCount}
+        />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
     </div>

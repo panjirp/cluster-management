@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, UnauthorizedError, ForbiddenError } from "@/lib/session";
-import { createPermitSchema } from "@/lib/validations/permit";
+import { createPermitSchema, permitTypeLabels } from "@/lib/validations/permit";
+import { notifyAdmins } from "@/lib/notify";
 
 export async function GET() {
   try {
@@ -73,6 +74,8 @@ export async function POST(req: NextRequest) {
             : undefined,
       },
     });
+
+    await notifyAdmins("Permohonan izin baru", permitTypeLabels[permit.type], `/permits/${permit.id}`);
 
     return NextResponse.json(permit, { status: 201 });
   } catch (error) {

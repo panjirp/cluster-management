@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         name: parsed.data.name,
         email: parsed.data.email,
         passwordHash,
+        mustChangePassword: true,
         role: parsed.data.role,
         houseId: parsed.data.houseId || null,
         phone: parsed.data.phone,

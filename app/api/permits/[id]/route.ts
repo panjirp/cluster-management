@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { saveUpload } from "@/lib/save-upload";
 import { prisma } from "@/lib/prisma";
 import { requireUser, requireAdmin, UnauthorizedError, ForbiddenError } from "@/lib/session";
-import { updatePermitSchema } from "@/lib/validations/permit";
+import { updatePermitSchema, permitStatusLabels, permitTypeLabels } from "@/lib/validations/permit";
 import { generatePermitPdf } from "@/lib/pdf";
+import { notifyUser } from "@/lib/notify";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -65,6 +66,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const finalDocUrl = await saveUpload(pdfBuffer, filename, "application/pdf");
 
       permit = await prisma.permit.update({ where: { id }, data: { finalDocUrl } });
+    }
+
+    if (parsed.data.status && parsed.data.status !== existing.status) {
+      await notifyUser(
+        permit.createdById,
+        "Status perizinan diperbarui",
+        `${permitTypeLabels[permit.type]}: ${permitStatusLabels[parsed.data.status]}`,
+        `/permits/${permit.id}`
+      );
     }
 
     return NextResponse.json(permit);

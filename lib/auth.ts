@@ -30,15 +30,20 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role,
           houseId: user.houseId,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
         token.houseId = user.houseId;
+        token.mustChangePassword = user.mustChangePassword;
+      }
+      if (trigger === "update" && session?.mustChangePassword === false) {
+        token.mustChangePassword = false;
       }
       return token;
     },
@@ -47,6 +52,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub!;
         session.user.role = token.role;
         session.user.houseId = token.houseId;
+        session.user.mustChangePassword = token.mustChangePassword;
       }
       return session;
     },

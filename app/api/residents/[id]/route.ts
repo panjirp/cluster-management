@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id },
       data: {
         ...rest,
-        ...(password ? { passwordHash: await bcrypt.hash(password, 10) } : {}),
+        ...(password ? { passwordHash: await bcrypt.hash(password, 10), mustChangePassword: true } : {}),
       },
     });
 

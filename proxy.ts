@@ -7,6 +7,10 @@ export default withAuth(
     const token = req.nextauth.token;
     const role = token?.role;
 
+    if (token?.mustChangePassword && pathname !== "/change-password") {
+      return NextResponse.redirect(new URL("/change-password", req.url));
+    }
+
     if (pathname.startsWith("/admin") && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
@@ -40,5 +44,8 @@ export const config = {
     "/cctv/:path*",
     "/directory/:path*",
     "/events/:path*",
+    "/change-password/:path*",
+    "/profile/:path*",
+    "/help/:path*",
   ],
 };
