@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalPhoneSchema } from "@/lib/validations/phone";
 
 export const roleValues = ["WARGA", "ADMIN", "BENDAHARA"] as const;
 
@@ -21,7 +22,7 @@ export const createUserSchema = z.object({
   password: z.string().min(6, "Password minimal 6 karakter"),
   role: z.enum(roleValues),
   houseId: z.string().optional(),
-  phone: z.string().max(20).optional(),
+  phone: optionalPhoneSchema.optional(),
   residencyStatus: z.enum(residencyStatusValues).optional(),
 });
 
@@ -32,7 +33,7 @@ export const updateUserSchema = z.object({
   email: z.string().email("Email tidak valid").optional(),
   role: z.enum(roleValues).optional(),
   houseId: z.string().nullable().optional(),
-  phone: z.string().max(20).nullable().optional(),
+  phone: optionalPhoneSchema.nullable().optional(),
   password: z.string().min(6, "Password minimal 6 karakter").optional(),
   residencyStatus: z.enum(residencyStatusValues).nullable().optional(),
 });
@@ -54,7 +55,7 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 export const updateProfileSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter").max(100).optional(),
-  phone: z.string().max(20).nullable().optional(),
+  phone: optionalPhoneSchema.nullable().optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

@@ -234,13 +234,14 @@ model Event {
 }
 
 model EventRSVP {
-  id        String     @id @default(cuid())
-  event     Event      @relation(fields: [eventId], references: [id])
-  eventId   String
-  user      User       @relation(fields: [userId], references: [id])
-  userId    String
-  status    RsvpStatus
-  createdAt DateTime   @default(now())
+  id            String     @id @default(cuid())
+  event         Event      @relation(fields: [eventId], references: [id])
+  eventId       String
+  user          User       @relation(fields: [userId], references: [id])
+  userId        String
+  status        RsvpStatus
+  reminderSent  Boolean    @default(false)
+  createdAt     DateTime   @default(now())
 
   @@unique([eventId, userId])
 }

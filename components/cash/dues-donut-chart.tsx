@@ -16,7 +16,7 @@ export function DuesDonutChart({ paid, unpaid }: { paid: number; unpaid: number 
 
   return (
     <div className="h-64 w-full max-w-sm rounded-lg border bg-card p-4">
-      <p className="mb-2 text-sm font-medium text-muted-foreground">Kepatuhan IPL Bulan Ini</p>
+      <p className="mb-2 text-sm font-medium text-muted-foreground">Kepatuhan Uang Kas Bulan Ini</p>
       <ResponsiveContainer width="100%" height="85%">
         <PieChart>
           <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>

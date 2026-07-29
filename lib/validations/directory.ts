@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredPhoneSchema } from "@/lib/validations/phone";
 
 export const directoryRoleValues = ["PENGURUS", "SATPAM"] as const;
 export const shiftStatusValues = ["PAGI", "SIANG", "MALAM", "OFF"] as const;
@@ -20,7 +21,7 @@ export const createDirectoryMemberSchema = z.object({
   roleType: z.enum(directoryRoleValues),
   position: z.string().min(2, "Jabatan minimal 2 karakter").max(80),
   fullName: z.string().min(2, "Nama minimal 2 karakter").max(100),
-  phone: z.string().min(8, "Nomor telepon tidak valid").max(20),
+  phone: requiredPhoneSchema,
   photoUrl: z.string().optional(),
   scheduleShift: z.enum(shiftStatusValues).optional(),
 });
@@ -31,7 +32,7 @@ export const updateDirectoryMemberSchema = z.object({
   roleType: z.enum(directoryRoleValues).optional(),
   position: z.string().min(2, "Jabatan minimal 2 karakter").max(80).optional(),
   fullName: z.string().min(2, "Nama minimal 2 karakter").max(100).optional(),
-  phone: z.string().min(8, "Nomor telepon tidak valid").max(20).optional(),
+  phone: requiredPhoneSchema.optional(),
   photoUrl: z.string().optional(),
   scheduleShift: z.enum(shiftStatusValues).nullable().optional(),
 });

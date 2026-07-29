@@ -134,7 +134,7 @@ export default async function DuesPage({
         </div>
       </div>
 
-      <DuesGrid houses={houseData} canManage={isBendahara} year={year} month={month} />
+      <DuesGrid key={`${year}-${month}`} houses={houseData} canManage={isBendahara} year={year} month={month} />
     </div>
   );
 }

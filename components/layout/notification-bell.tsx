@@ -46,6 +46,15 @@ export function NotificationBell({
   const [notifications, setNotifications] = useState(initialNotifications);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
 
+  // The navbar (and this bell) stays mounted across page navigations, but
+  // each navigation re-fetches notifications server-side and passes fresh
+  // props — sync local state to those on every change, otherwise the first
+  // render's data would stick around forever.
+  useEffect(() => {
+    setNotifications(initialNotifications);
+    setUnreadCount(initialUnreadCount);
+  }, [initialNotifications, initialUnreadCount]);
+
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch("/api/notifications");

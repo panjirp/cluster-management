@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -221,7 +222,12 @@ export function DuesGrid({
                     aria-label={`Pilih ${house.blockNumber}`}
                   />
                 )}
-                <span className="font-medium">{house.blockNumber}</span>
+                <Link
+                  href={`/cash/dues/house/${house.id}?year=${year}&month=${month}`}
+                  className="font-medium hover:text-primary hover:underline"
+                >
+                  {house.blockNumber}
+                </Link>
               </div>
               <Badge variant="outline" className={statusBadgeClass(house)}>
                 {statusBadgeText(house)}
@@ -309,7 +315,14 @@ export function DuesGrid({
                   )}
                 </TableCell>
               )}
-              <TableCell>{house.blockNumber}</TableCell>
+              <TableCell>
+                <Link
+                  href={`/cash/dues/house/${house.id}?year=${year}&month=${month}`}
+                  className="hover:text-primary hover:underline"
+                >
+                  {house.blockNumber}
+                </Link>
+              </TableCell>
               <TableCell className="text-muted-foreground">{house.ownerName ?? "-"}</TableCell>
               <TableCell>{house.due ? formatRupiah(house.due.amount) : "-"}</TableCell>
               <TableCell>
