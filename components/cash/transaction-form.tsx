@@ -23,8 +23,18 @@ const typeOptions: { value: "INCOME" | "EXPENSE"; label: string }[] = [
   { value: "EXPENSE", label: "Pengeluaran" },
 ];
 
-export function TransactionForm() {
+export type TransactionFormInitial = {
+  id: string;
+  type: "INCOME" | "EXPENSE";
+  category: CreateTransactionInput["category"];
+  amount: number;
+  description: string;
+  date: string;
+};
+
+export function TransactionForm({ transaction }: { transaction?: TransactionFormInitial }) {
   const router = useRouter();
+  const isEdit = Boolean(transaction);
   const [submitting, setSubmitting] = useState(false);
   const {
     register,
@@ -34,13 +44,21 @@ export function TransactionForm() {
     formState: { errors },
   } = useForm<z.input<typeof createTransactionSchema>, unknown, CreateTransactionInput>({
     resolver: zodResolver(createTransactionSchema),
-    defaultValues: { type: "INCOME", category: "IURAN_BULANAN", description: "", amount: 0 },
+    defaultValues: transaction
+      ? {
+          type: transaction.type,
+          category: transaction.category,
+          description: transaction.description,
+          amount: transaction.amount,
+          date: transaction.date.slice(0, 10),
+        }
+      : { type: "INCOME", category: "IURAN_BULANAN", description: "", amount: 0 },
   });
 
   async function onSubmit(data: CreateTransactionInput) {
     setSubmitting(true);
-    const res = await fetch("/api/cash/transactions", {
-      method: "POST",
+    const res = await fetch(isEdit ? `/api/cash/transactions/${transaction!.id}` : "/api/cash/transactions", {
+      method: isEdit ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -120,7 +138,7 @@ export function TransactionForm() {
       </div>
 
       <Button type="submit" disabled={submitting}>
-        {submitting ? "Menyimpan..." : "Simpan Transaksi"}
+        {submitting ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Simpan Transaksi"}
       </Button>
     </form>
   );

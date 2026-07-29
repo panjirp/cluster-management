@@ -22,6 +22,7 @@ type HouseDue = {
   ownerName: string | null;
   contactPhone: string | null;
   due: { id: string; amount: number; isPaid: boolean; paidAt: string | null } | null;
+  hasHistory: boolean;
   overdueMonths: number;
 };
 
@@ -29,16 +30,19 @@ function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 }
 
+// "Belum Dibuat" only applies to a house that has never had a dues record at
+// all. Once a house has any history, a missing record for the viewed month
+// counts as unpaid/overdue rather than reverting to "not created".
 function statusBadgeText(house: HouseDue) {
-  if (!house.due) return "Belum Dibuat";
-  if (house.due.isPaid) return "Lunas";
+  if (!house.due && !house.hasHistory) return "Belum Dibuat";
+  if (house.due?.isPaid) return "Lunas";
   if (house.overdueMonths >= 2) return `Menunggak ${house.overdueMonths} bulan`;
   return "Belum Bayar";
 }
 
 function statusBadgeClass(house: HouseDue) {
-  if (!house.due) return "";
-  if (house.due.isPaid) return "border-transparent bg-green-500/15 text-green-700 dark:text-green-400";
+  if (!house.due && !house.hasHistory) return "";
+  if (house.due?.isPaid) return "border-transparent bg-green-500/15 text-green-700 dark:text-green-400";
   if (house.overdueMonths >= 2) return "border-transparent bg-red-500/15 text-red-700 dark:text-red-400";
   return "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-400";
 }
@@ -47,6 +51,18 @@ const MONTH_LABELS = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
+
+function shiftMonth(year: number, month: number, delta: number) {
+  const date = new Date(year, month - 1 + delta, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+
+function monthHref(year: number, month: number, query: string, block: string) {
+  const qs = new URLSearchParams({ year: String(year), month: String(month) });
+  if (query) qs.set("q", query);
+  if (block !== ALL_BLOCKS) qs.set("block", block);
+  return `/cash/dues?${qs.toString()}`;
+}
 
 export function DuesGrid({
   houses: initialHouses,
@@ -91,7 +107,10 @@ export function DuesGrid({
   const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
 
   const paidCount = houses.filter((h) => h.due?.isPaid).length;
-  const unpaidCount = houses.filter((h) => h.due && !h.due.isPaid).length;
+  const unpaidCount = houses.filter((h) => !h.due?.isPaid && (h.due || h.hasHistory)).length;
+
+  const prevMonth = shiftMonth(year, month, -1);
+  const nextMonth = shiftMonth(year, month, 1);
 
   function toggleSelectAll(checked: boolean) {
     setSelected(checked ? new Set(selectableIds) : new Set());
@@ -106,9 +125,38 @@ export function DuesGrid({
     });
   }
 
-  async function togglePaid(dueId: string, isPaid: boolean) {
+  async function togglePaid(house: HouseDue, isPaid: boolean) {
     const previous = houses;
-    setPendingId(dueId);
+    setPendingId(house.id);
+
+    // Houses without a due row yet (never generated for this month) get one
+    // created on the fly and marked paid in a single request; existing rows
+    // are just toggled.
+    if (!house.due) {
+      const res = await fetch("/api/cash/dues/mark-paid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ houseId: house.id, year, month }),
+      });
+      setPendingId(null);
+
+      if (!res.ok) {
+        toast.error("Gagal menandai lunas.");
+        return;
+      }
+
+      const due = await res.json();
+      setHouses((prev) =>
+        prev.map((h) =>
+          h.id === house.id
+            ? { ...h, hasHistory: true, due: { id: due.id, amount: due.amount, isPaid: due.isPaid, paidAt: due.paidAt } }
+            : h
+        )
+      );
+      return;
+    }
+
+    const dueId = house.due.id;
     setHouses((prev) =>
       prev.map((h) =>
         h.due?.id === dueId
@@ -172,6 +220,19 @@ export function DuesGrid({
 
       <div className="sticky top-0 z-10 -mx-4 space-y-2 border-b bg-background px-4 py-2 sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={monthHref(prevMonth.year, prevMonth.month, query, block)}>&larr; Sebelumnya</Link>}
+          />
+          <span className="text-sm font-medium">
+            {MONTH_LABELS[month - 1]} {year}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={monthHref(nextMonth.year, nextMonth.month, query, block)}>Berikutnya &rarr;</Link>}
+          />
           <Select items={blockItems} value={block} onValueChange={(v) => v && setBlock(v)}>
             <SelectTrigger className="w-36">
               <SelectValue />
@@ -237,9 +298,10 @@ export function DuesGrid({
               <span className="text-muted-foreground">{house.ownerName ?? "-"}</span>
               <span>{house.due ? formatRupiah(house.due.amount) : "-"}</span>
             </div>
-            {canManage && house.due && (
+            {canManage && (
               <div className="flex flex-wrap justify-end gap-2 pt-1">
-                {!house.due.isPaid &&
+                {house.due &&
+                  !house.due.isPaid &&
                   (house.contactPhone ? (
                     <Button
                       variant="outline"
@@ -268,10 +330,10 @@ export function DuesGrid({
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={pendingId === house.due.id}
-                  onClick={() => togglePaid(house.due!.id, !house.due!.isPaid)}
+                  disabled={pendingId === house.id}
+                  onClick={() => togglePaid(house, !house.due?.isPaid)}
                 >
-                  {house.due.isPaid ? "Tandai Belum Bayar" : "Tandai Lunas"}
+                  {house.due?.isPaid ? "Tandai Belum Bayar" : "Tandai Lunas"}
                 </Button>
               </div>
             )}
@@ -359,16 +421,14 @@ export function DuesGrid({
                         Kirim Pengingat WA
                       </Button>
                     ))}
-                  {house.due && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={pendingId === house.due.id}
-                      onClick={() => togglePaid(house.due!.id, !house.due!.isPaid)}
-                    >
-                      {house.due.isPaid ? "Tandai Belum Bayar" : "Tandai Lunas"}
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={pendingId === house.id}
+                    onClick={() => togglePaid(house, !house.due?.isPaid)}
+                  >
+                    {house.due?.isPaid ? "Tandai Belum Bayar" : "Tandai Lunas"}
+                  </Button>
                 </TableCell>
               )}
             </TableRow>

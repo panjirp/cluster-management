@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo } from "react";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Pencil } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DeleteTransactionButton } from "@/components/cash/delete-transaction-button";
 import { Pagination } from "@/components/shared/pagination";
@@ -113,6 +116,7 @@ function isInRange(date: Date, range: string) {
 }
 
 export function TransactionsTable({ transactions, isBendahara }: { transactions: TransactionRow[]; isBendahara: boolean }) {
+  const [query, setQuery] = useQueryState("q", "");
   const [range, setRange] = useQueryState("range", ALL_TIME);
   const [type, setType] = useQueryState("type", ALL_TYPES);
   const [category, setCategory] = useQueryState("category", ALL_CATEGORIES);
@@ -139,6 +143,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
           if (!isInRange(new Date(tx.date), range)) return false;
           if (type !== ALL_TYPES && tx.type !== type) return false;
           if (category !== ALL_CATEGORIES && tx.category !== category) return false;
+          if (query && !tx.description.toLowerCase().includes(query.toLowerCase())) return false;
           return true;
         })
         .sort((a, b) => {
@@ -146,7 +151,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
           if (sortField === "amount") return (a.amount - b.amount) * dir;
           return (new Date(a.date).getTime() - new Date(b.date).getTime()) * dir;
         }),
-    [transactions, range, type, category, sortField, sortDir]
+    [transactions, range, type, category, query, sortField, sortDir]
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -155,7 +160,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
   useEffect(() => {
     if (page !== 1) setPageStr("1");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range, type, category]);
+  }, [range, type, category, query]);
 
   const paginated = useMemo(
     () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
@@ -165,6 +170,12 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Cari keterangan…"
+          className="w-56"
+        />
         <Select items={rangeItems} value={range} onValueChange={(v) => v && setRange(v)}>
           <SelectTrigger className="w-44">
             <SelectValue />
@@ -243,7 +254,15 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
                   </span>
                 </div>
                 {isBendahara && (
-                  <div className="flex justify-end pt-1">
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Edit transaksi"
+                      render={<Link href={`/cash/transactions/${tx.id}/edit`} />}
+                    >
+                      <Pencil />
+                    </Button>
                     <DeleteTransactionButton id={tx.id} />
                   </div>
                 )}
@@ -297,7 +316,15 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
                     <TableCell>{tx.description}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">{formatRupiah(tx.amount)}</TableCell>
                     {isBendahara && (
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-1 whitespace-nowrap">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Edit transaksi"
+                          render={<Link href={`/cash/transactions/${tx.id}/edit`} />}
+                        >
+                          <Pencil />
+                        </Button>
                         <DeleteTransactionButton id={tx.id} />
                       </TableCell>
                     )}

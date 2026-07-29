@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -12,16 +11,6 @@ import { compareBlockNumber } from "@/lib/sort";
 import { BackLink } from "@/components/shared/back-link";
 
 export const metadata: Metadata = { title: "Iuran Bulanan" };
-
-const MONTH_LABELS = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
-
-function shiftMonth(year: number, month: number, delta: number) {
-  const date = new Date(year, month - 1 + delta, 1);
-  return { year: date.getFullYear(), month: date.getMonth() + 1 };
-}
 
 export default async function DuesPage({
   searchParams,
@@ -59,13 +48,25 @@ export default async function DuesPage({
     duesByHouse.set(due.houseId, list);
   }
 
+  // Walks backward from the viewed month. A month with an unpaid (or missing,
+  // as long as the house has dues history from before) record extends the
+  // streak; a paid month or reaching before the house's earliest known due
+  // ends it. This treats "never generated" as "belum dibuat" only when the
+  // house has no history at all — once history exists, a gap counts as unpaid.
   function countOverdueMonths(houseId: string): number {
-    const list = (duesByHouse.get(houseId) ?? []).sort((a, b) => b.year - a.year || b.month - a.month);
+    const list = duesByHouse.get(houseId) ?? [];
+    if (list.length === 0) return 0;
+
+    const dueByKey = new Map(list.map((d) => [`${d.year}-${d.month}`, d]));
+    const earliest = list.reduce((min, d) =>
+      d.year < min.year || (d.year === min.year && d.month < min.month) ? d : min
+    );
+
     let count = 0;
     let cursor = { year, month };
-    for (const due of list) {
-      if (due.year !== cursor.year || due.month !== cursor.month) break;
-      if (due.isPaid) break;
+    while (cursor.year > earliest.year || (cursor.year === earliest.year && cursor.month >= earliest.month)) {
+      const due = dueByKey.get(`${cursor.year}-${cursor.month}`);
+      if (due?.isPaid) break;
       count += 1;
       cursor = cursor.month === 1 ? { year: cursor.year - 1, month: 12 } : { year: cursor.year, month: cursor.month - 1 };
     }
@@ -78,24 +79,26 @@ export default async function DuesPage({
     create: { id: "singleton" },
   });
 
-  const houseData = houses.map((house) => ({
-    id: house.id,
-    blockNumber: house.blockNumber,
-    ownerName: house.residents.map((r) => r.name).join(", ") || house.residentName || null,
-    contactPhone: isBendahara ? house.contactPhone : null,
-    due: house.monthlyDues[0]
-      ? {
-          id: house.monthlyDues[0].id,
-          amount: house.monthlyDues[0].amount,
-          isPaid: house.monthlyDues[0].isPaid,
-          paidAt: house.monthlyDues[0].paidAt?.toISOString() ?? null,
-        }
-      : null,
-    overdueMonths: house.monthlyDues[0] && !house.monthlyDues[0].isPaid ? countOverdueMonths(house.id) : 0,
-  }));
+  const houseData = houses.map((house) => {
+    const hasHistory = (duesByHouse.get(house.id)?.length ?? 0) > 0;
+    return {
+      id: house.id,
+      blockNumber: house.blockNumber,
+      ownerName: house.residents.map((r) => r.name).join(", ") || house.residentName || null,
+      contactPhone: isBendahara ? house.contactPhone : null,
+      due: house.monthlyDues[0]
+        ? {
+            id: house.monthlyDues[0].id,
+            amount: house.monthlyDues[0].amount,
+            isPaid: house.monthlyDues[0].isPaid,
+            paidAt: house.monthlyDues[0].paidAt?.toISOString() ?? null,
+          }
+        : null,
+      hasHistory,
+      overdueMonths: hasHistory ? countOverdueMonths(house.id) : 0,
+    };
+  });
 
-  const prev = shiftMonth(year, month, -1);
-  const next = shiftMonth(year, month, 1);
   const allGenerated = houseData.every((h) => h.due !== null);
 
   return (
@@ -108,36 +111,19 @@ export default async function DuesPage({
 
       {isBendahara && <DuesAmountSetting initialAmount={setting.duesAmount} />}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            render={<Link href={`/cash/dues?year=${prev.year}&month=${prev.month}`}>&larr; Sebelumnya</Link>}
-          />
-          <span className="text-sm font-medium">
-            {MONTH_LABELS[month - 1]} {year}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            render={<Link href={`/cash/dues?year=${next.year}&month=${next.month}`}>Berikutnya &rarr;</Link>}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            render={
-              <a href={`/api/cash/dues/export?year=${year}&month=${month}`}>
-                <Download data-icon="inline-start" />
-                Export CSV
-              </a>
-            }
-          />
-          {isBendahara && <ImportDuesSheetDialog defaultSheetUrl={setting.duesSheetUrl} />}
-          {isBendahara && !allGenerated && <GenerateDuesButton year={year} month={month} />}
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          render={
+            <a href={`/api/cash/dues/export?year=${year}&month=${month}`}>
+              <Download data-icon="inline-start" />
+              Export CSV
+            </a>
+          }
+        />
+        {isBendahara && <ImportDuesSheetDialog defaultSheetUrl={setting.duesSheetUrl} />}
+        {isBendahara && !allGenerated && <GenerateDuesButton year={year} month={month} />}
       </div>
 
       <DuesGrid key={`${year}-${month}`} houses={houseData} canManage={isBendahara} year={year} month={month} />
