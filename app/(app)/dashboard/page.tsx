@@ -7,12 +7,14 @@ import {
   Users,
   PlusCircle,
   CalendarClock,
+  CalendarDays,
   History,
   type LucideIcon,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { computeTotals } from "@/lib/cash";
 
@@ -73,13 +75,71 @@ function StatCard({
   );
 }
 
+function formatEventDate(date: Date) {
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short" }).format(date);
+}
+
+async function getUpcomingEvents() {
+  const events = await prisma.event.findMany({
+    where: { eventDate: { gte: new Date() } },
+    orderBy: { eventDate: "asc" },
+    take: 3,
+    include: { rsvps: { where: { status: "GOING" } } },
+  });
+  return events.map((e) => ({
+    id: e.id,
+    title: e.title,
+    location: e.location,
+    eventDate: e.eventDate,
+    goingCount: e.rsvps.length,
+  }));
+}
+
+function UpcomingEventsSection({ events }: { events: Awaited<ReturnType<typeof getUpcomingEvents>> }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-medium">Acara Mendatang</h2>
+        <Link href="/events" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <CalendarDays className="size-4" />
+          Lihat semua
+        </Link>
+      </div>
+      {events.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Belum ada acara mendatang.</p>
+      ) : (
+        <div className="space-y-2">
+          {events.map((event) => (
+            <Link key={event.id} href={`/events/${event.id}`} className="group block">
+              <Card className="transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
+                <CardContent className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0 space-y-0.5">
+                    <p className="truncate text-sm font-medium group-hover:text-primary">{event.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatEventDate(event.eventDate)}
+                      {event.location ? ` · ${event.location}` : ""}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0">
+                    {event.goingCount} Akan Hadir
+                  </Badge>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const session = await requireUser();
   const { role, id: userId } = session.user;
 
   if (role === "WARGA") {
     const now = new Date();
-    const [openComplaints, pendingPermits, due] = await Promise.all([
+    const [openComplaints, pendingPermits, due, upcomingEvents] = await Promise.all([
       prisma.complaint.count({ where: { createdById: userId, status: { not: "RESOLVED" } } }),
       prisma.permit.count({ where: { createdById: userId, status: "PENDING" } }),
       session.user.houseId
@@ -93,6 +153,7 @@ export default async function DashboardPage() {
             },
           })
         : null,
+      getUpcomingEvents(),
     ]);
 
     return (
@@ -128,15 +189,18 @@ export default async function DashboardPage() {
           <Button render={<Link href="/complaints/new">Buat Pengaduan</Link>} />
           <Button variant="outline" render={<Link href="/permits/new">Ajukan Izin</Link>} />
         </div>
+
+        <UpcomingEventsSection events={upcomingEvents} />
       </div>
     );
   }
 
   if (role === "ADMIN") {
-    const [openComplaints, pendingPermits, recentActivity] = await Promise.all([
+    const [openComplaints, pendingPermits, recentActivity, upcomingEvents] = await Promise.all([
       prisma.complaint.count({ where: { status: { not: "RESOLVED" } } }),
       prisma.permit.count({ where: { status: "PENDING" } }),
       prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+      getUpcomingEvents(),
     ]);
 
     return (
@@ -196,17 +260,20 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
+
+        <UpcomingEventsSection events={upcomingEvents} />
       </div>
     );
   }
 
   // BENDAHARA
   const now = new Date();
-  const [transactions, unpaidDues] = await Promise.all([
+  const [transactions, unpaidDues, upcomingEvents] = await Promise.all([
     prisma.cashTransaction.findMany(),
     prisma.monthlyDue.count({
       where: { year: now.getFullYear(), month: now.getMonth() + 1, isPaid: false },
     }),
+    getUpcomingEvents(),
   ]);
   const totals = computeTotals(transactions);
 
@@ -239,6 +306,8 @@ export default async function DashboardPage() {
           accent="blue"
         />
       </div>
+
+      <UpcomingEventsSection events={upcomingEvents} />
     </div>
   );
 }

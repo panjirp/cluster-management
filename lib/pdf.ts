@@ -1,6 +1,8 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { Permit } from "@/app/generated/prisma/client";
 import { permitTypeLabels } from "@/lib/validations/permit";
+import { transactionCategoryLabels } from "@/lib/validations/cash";
+import type { AnnualCashSummary } from "@/lib/cash";
 
 function formatDate(date: Date | null) {
   if (!date) return "-";
@@ -80,6 +82,77 @@ export async function generatePermitPdf(
     font,
     color: rgb(0.5, 0.5, 0.5),
   });
+
+  const bytes = await doc.save();
+  return Buffer.from(bytes);
+}
+
+function formatRupiah(value: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+}
+
+export async function generateAnnualCashReportPdf(summary: AnnualCashSummary): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  let page = doc.addPage([595, 842]); // A4
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  const left = 60;
+  const right = 535;
+  let y = 780;
+
+  function ensureSpace(minY: number) {
+    if (y < minY) {
+      page = doc.addPage([595, 842]);
+      y = 780;
+    }
+  }
+
+  page.drawText("BARCELONA COVE", { x: left, y, size: 20, font: bold });
+  y -= 20;
+  page.drawText("Rekap Tahunan Uang Kas", { x: left, y, size: 12, font, color: rgb(0.35, 0.35, 0.35) });
+  y -= 10;
+  page.drawLine({ start: { x: left, y }, end: { x: right, y }, thickness: 1, color: rgb(0.8, 0.8, 0.8) });
+  y -= 30;
+
+  page.drawText(`Tahun ${summary.year}`, { x: left, y, size: 16, font: bold });
+  y -= 30;
+
+  const totalsRows: [string, string][] = [
+    ["Total Pemasukan", formatRupiah(summary.income)],
+    ["Total Pengeluaran", formatRupiah(summary.expense)],
+    ["Selisih", formatRupiah(summary.balance)],
+    ["Jumlah Transaksi", String(summary.transactionCount)],
+  ];
+  for (const [label, value] of totalsRows) {
+    page.drawText(label, { x: left, y, size: 11, font: bold });
+    page.drawText(value, { x: left + 200, y, size: 11, font });
+    y -= 22;
+  }
+
+  y -= 15;
+  page.drawText("Rincian per Kategori", { x: left, y, size: 13, font: bold });
+  y -= 10;
+  page.drawLine({ start: { x: left, y }, end: { x: right, y }, thickness: 0.5, color: rgb(0.85, 0.85, 0.85) });
+  y -= 20;
+
+  page.drawText("Kategori", { x: left, y, size: 10, font: bold, color: rgb(0.4, 0.4, 0.4) });
+  page.drawText("Tipe", { x: left + 260, y, size: 10, font: bold, color: rgb(0.4, 0.4, 0.4) });
+  page.drawText("Nominal", { x: left + 360, y, size: 10, font: bold, color: rgb(0.4, 0.4, 0.4) });
+  y -= 18;
+
+  for (const entry of summary.byCategory) {
+    ensureSpace(80);
+    page.drawText(transactionCategoryLabels[entry.category], { x: left, y, size: 10, font });
+    page.drawText(entry.type === "INCOME" ? "Pemasukan" : "Pengeluaran", { x: left + 260, y, size: 10, font });
+    page.drawText(formatRupiah(entry.amount), { x: left + 360, y, size: 10, font });
+    y -= 18;
+  }
+
+  page.drawText(
+    `Dibuat otomatis oleh Portal Barcelona Cove pada ${new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date())}.`,
+    { x: left, y: 40, size: 8, font, color: rgb(0.5, 0.5, 0.5) }
+  );
 
   const bytes = await doc.save();
   return Buffer.from(bytes);

@@ -57,6 +57,8 @@ export type CategoryBreakdown = {
   amount: number;
 };
 
+export type AnnualCashSummary = ReturnType<typeof buildAnnualSummary>;
+
 export function buildAnnualSummary(transactions: CashTransaction[], year: number) {
   const inYear = transactions.filter((tx) => tx.date.getFullYear() === year);
   const totals = computeTotals(inYear);

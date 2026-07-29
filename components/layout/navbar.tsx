@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { UserMenu } from "@/components/layout/user-menu";
+import { GlobalSearch } from "@/components/layout/global-search";
 import { Button } from "@/components/ui/button";
 import type { Role } from "@/app/generated/prisma/client";
 
@@ -35,6 +36,7 @@ export function Navbar({
         <MobileNav role={role} badges={badges} />
       </div>
       <div className="flex items-center gap-2">
+        <GlobalSearch />
         <Button variant="outline" size="icon-sm" aria-label="Bantuan" render={<Link href="/help" />}>
           <HelpCircle />
         </Button>

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Navbar } from "@/components/layout/navbar";
+import { CopyrightFooter } from "@/components/layout/copyright-footer";
 
 async function getNavBadges(role: string): Promise<Record<string, number>> {
   if (role === "ADMIN") {
@@ -51,6 +52,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           unreadCount={unreadCount}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <CopyrightFooter />
       </div>
     </div>
   );

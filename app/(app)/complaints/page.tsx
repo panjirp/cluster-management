@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
@@ -31,15 +32,25 @@ export default async function ComplaintsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Pengaduan</h1>
           <p className="text-sm text-muted-foreground">
             {isWarga ? "Daftar pengaduan yang Anda ajukan" : "Semua pengaduan warga"}
           </p>
         </div>
-        <div className="flex gap-2">
-          {!isWarga && <Button variant="outline" render={<a href="/api/complaints/export">Export CSV</a>} />}
+        <div className="flex flex-wrap gap-2">
+          {!isWarga && (
+            <Button
+              variant="outline"
+              render={
+                <a href="/api/complaints/export">
+                  <Download data-icon="inline-start" />
+                  Export CSV
+                </a>
+              }
+            />
+          )}
           {isWarga && <Button render={<Link href="/complaints/new">Buat Pengaduan</Link>} />}
         </div>
       </div>

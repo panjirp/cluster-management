@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
@@ -107,8 +108,8 @@ export default async function DuesPage({
 
       {isBendahara && <DuesAmountSetting initialAmount={setting.duesAmount} />}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -123,11 +124,16 @@ export default async function DuesPage({
             render={<Link href={`/cash/dues?year=${next.year}&month=${next.month}`}>Berikutnya &rarr;</Link>}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            render={<a href={`/api/cash/dues/export?year=${year}&month=${month}`}>Export CSV</a>}
+            render={
+              <a href={`/api/cash/dues/export?year=${year}&month=${month}`}>
+                <Download data-icon="inline-start" />
+                Export CSV
+              </a>
+            }
           />
           {isBendahara && <ImportDuesSheetDialog defaultSheetUrl={setting.duesSheetUrl} />}
           {isBendahara && !allGenerated && <GenerateDuesButton year={year} month={month} />}

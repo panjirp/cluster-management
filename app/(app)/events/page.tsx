@@ -29,12 +29,16 @@ export default async function EventsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Info & Acara</h1>
           <p className="text-sm text-muted-foreground">Kegiatan komunitas cluster Barcelona Cove</p>
         </div>
-        {isAdmin && <Button render={<Link href="/events/new">Buat Acara</Link>} />}
+        {isAdmin && (
+          <div className="flex flex-wrap gap-2">
+            <Button render={<Link href="/events/new">Buat Acara</Link>} />
+          </div>
+        )}
       </div>
 
       <EventsList events={rows} isAdmin={isAdmin} />

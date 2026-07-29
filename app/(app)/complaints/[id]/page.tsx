@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 import { BackLink } from "@/components/shared/back-link";
 import { ComplaintStatusBadge } from "@/components/complaints/complaint-status-badge";
 import { ComplaintStatusForm } from "@/components/complaints/complaint-status-form";
+import { PhotoLightbox } from "@/components/complaints/photo-lightbox";
 import { complaintCategoryLabels } from "@/lib/validations/complaint";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -46,10 +47,7 @@ export default async function ComplaintDetailPage({ params }: { params: Promise<
         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{complaint.description}</p>
       </div>
 
-      {complaint.photoUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={complaint.photoUrl} alt="Foto bukti pengaduan" className="max-w-sm rounded-lg border" />
-      )}
+      {complaint.photoUrl && <PhotoLightbox src={complaint.photoUrl} alt="Foto bukti pengaduan" />}
 
       {complaint.response && (
         <div className="space-y-1 rounded-lg border bg-muted/30 p-4">

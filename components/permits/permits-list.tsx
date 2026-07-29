@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FileCheck2, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Pagination } from "@/components/shared/pagination";
 import { PermitStatusBadge } from "@/components/permits/permit-status-badge";
 import { permitTypeLabels, permitStatusValues, permitStatusLabels } from "@/lib/validations/permit";
 import { useQueryState } from "@/lib/use-query-state";
 import type { PermitStatus } from "@/app/generated/prisma/client";
 
 const ALL_STATUS = "__all__";
+const PAGE_SIZE = 10;
 
 const statusAccent: Record<PermitStatus, string> = {
   PENDING: "border-l-amber-500",
@@ -52,8 +54,10 @@ export function PermitsList({
   const router = useRouter();
   const [status, setStatus] = useQueryState("status", ALL_STATUS);
   const [query, setQuery] = useQueryState("q", "");
+  const [pageStr, setPageStr] = useQueryState("page", "1");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkPending, setBulkPending] = useState(false);
+  const page = Math.max(1, Number(pageStr) || 1);
 
   const statusItems = useMemo(() => ({ [ALL_STATUS]: "Semua Status", ...permitStatusLabels }), []);
 
@@ -67,7 +71,16 @@ export function PermitsList({
     return true;
   });
 
-  const selectableIds = filtered.filter((p) => p.status === "PENDING").map((p) => p.id);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => {
+    if (page !== 1) setPageStr("1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, query]);
+
+  const selectableIds = paginated.filter((p) => p.status === "PENDING").map((p) => p.id);
   const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
 
   function toggleSelectAll(checked: boolean) {
@@ -174,7 +187,7 @@ export function PermitsList({
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((permit) => (
+          {paginated.map((permit) => (
             <Card
               key={permit.id}
               className={`border-l-4 ${statusAccent[permit.status]} transition-all hover:-translate-y-0.5 hover:shadow-md`}
@@ -211,6 +224,8 @@ export function PermitsList({
           ))}
         </div>
       )}
+
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={(p) => setPageStr(p.toString())} />
     </div>
   );
 }

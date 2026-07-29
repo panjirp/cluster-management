@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PasswordInput } from "@/components/shared/password-input";
+import { CopyrightFooter } from "@/components/layout/copyright-footer";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-br from-primary/15 via-background to-background p-4">
+    <div className="flex min-h-screen flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary/15 via-background to-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="mb-2 grid size-12 place-items-center rounded-xl bg-primary text-base font-bold text-primary-foreground">
@@ -77,6 +78,7 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
+      <CopyrightFooter />
     </div>
   );
 }

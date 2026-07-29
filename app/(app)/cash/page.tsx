@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
@@ -39,13 +40,21 @@ export default async function CashPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Uang Kas</h1>
           <p className="text-sm text-muted-foreground">Transparansi keuangan cluster Barcelona Cove</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" render={<a href="/api/cash/transactions/export">Export CSV</a>} />
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            render={
+              <a href="/api/cash/transactions/export">
+                <Download data-icon="inline-start" />
+                Export CSV
+              </a>
+            }
+          />
           <Button variant="outline" render={<Link href="/cash/annual">Rekap Tahunan</Link>} />
           <Button variant="outline" render={<Link href="/cash/dues">Iuran Bulanan</Link>} />
           {isBendahara && <ImportSheetDialog defaultSheetUrl={setting?.cashSheetUrl} />}

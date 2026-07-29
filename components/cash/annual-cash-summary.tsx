@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
+import { FileDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useQueryState } from "@/lib/use-query-state";
 import { buildAnnualSummary, getAvailableYears } from "@/lib/cash";
 import { transactionCategoryLabels } from "@/lib/validations/cash";
@@ -29,7 +31,7 @@ export function AnnualCashSummary({ transactions }: { transactions: CashTransact
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Select items={yearItems} value={yearStr} onValueChange={(v) => v && setYearStr(v)}>
           <SelectTrigger className="w-32">
             <SelectValue />
@@ -43,6 +45,17 @@ export function AnnualCashSummary({ transactions }: { transactions: CashTransact
           </SelectContent>
         </Select>
         <span className="text-xs text-muted-foreground">{summary.transactionCount} transaksi tahun ini</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          render={
+            <a href={`/api/cash/annual/pdf?year=${year}`}>
+              <FileDown data-icon="inline-start" />
+              Unduh PDF
+            </a>
+          }
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

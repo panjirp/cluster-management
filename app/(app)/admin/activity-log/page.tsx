@@ -1,22 +1,11 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ActivityLogList } from "@/components/admin/activity-log-list";
 import { History } from "lucide-react";
 
 export const metadata: Metadata = { title: "Log Aktivitas" };
-
-const actionLabels: Record<string, string> = {
-  UPDATE_COMPLAINT_STATUS: "Pengaduan",
-  UPDATE_PERMIT_STATUS: "Perizinan",
-  DELETE_RESIDENT: "Warga",
-  DELETE_HOUSE: "Rumah",
-};
-
-function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
 
 export default async function ActivityLogPage() {
   await requireAdmin();
@@ -36,22 +25,7 @@ export default async function ActivityLogPage() {
       {logs.length === 0 ? (
         <EmptyState icon={History} title="Belum ada aktivitas" description="Riwayat tindakan admin akan muncul di sini." />
       ) : (
-        <div className="space-y-2">
-          {logs.map((log) => (
-            <Card key={log.id}>
-              <CardContent className="flex items-start justify-between gap-3 py-3">
-                <div className="min-w-0 space-y-0.5">
-                  <p className="text-sm">
-                    <span className="font-medium">{log.actorName}</span> — {log.description}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {actionLabels[log.action] ?? log.action} · {formatDateTime(log.createdAt)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <ActivityLogList logs={logs.map((log) => ({ ...log, createdAt: log.createdAt.toISOString() }))} />
       )}
     </div>
   );
