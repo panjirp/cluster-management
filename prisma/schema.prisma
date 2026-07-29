@@ -1,0 +1,255 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  WARGA
+  ADMIN
+  BENDAHARA
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ComplaintCategory {
+  FASILITAS
+  KEAMANAN
+  KEBISINGAN
+  KEBERSIHAN
+  LAINNYA
+}
+
+enum PermitType {
+  RENOVASI
+  ACARA
+  TAMU_KENDARAAN
+  SURAT_PENGANTAR
+  LAINNYA
+}
+
+enum HouseStatus {
+  DITEMPATI
+  KOSONG
+  DIKONTRAKKAN
+}
+
+enum DirectoryRole {
+  PENGURUS
+  SATPAM
+}
+
+enum ShiftStatus {
+  PAGI
+  SIANG
+  MALAM
+  OFF
+}
+
+enum RsvpStatus {
+  GOING
+  NOT_GOING
+}
+
+enum PermitStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionCategory {
+  IURAN_BULANAN
+  DONASI
+  KEAMANAN
+  KEBERSIHAN
+  PERBAIKAN
+  ACARA
+  LAINNYA
+}
+
+enum ResidencyStatus {
+  PEMILIK
+  KONTRAK
+}
+
+model User {
+  id              String           @id @default(cuid())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  role            Role             @default(WARGA)
+  phone           String?
+  houseId         String?
+  house           House?           @relation(fields: [houseId], references: [id])
+  residencyStatus ResidencyStatus?
+  complaints      Complaint[]
+  permits         Permit[]
+  events          Event[]
+  rsvps           EventRSVP[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model House {
+  id           String       @id @default(cuid())
+  blockNumber  String       @unique
+  statusHuni   HouseStatus  @default(DITEMPATI)
+  contactPhone String?
+  // Nama warga tercatat dari sumber data eksternal (mis. sheet iuran), tidak
+  // mengharuskan warga tersebut punya akun login di aplikasi ini.
+  residentName String?
+  mapX         Float?
+  mapY         Float?
+  residents    User[]
+  monthlyDues  MonthlyDue[]
+  createdAt    DateTime     @default(now())
+}
+
+model Complaint {
+  id          String            @id @default(cuid())
+  title       String
+  description String
+  category    ComplaintCategory
+  status      ComplaintStatus   @default(OPEN)
+  response    String?
+  photoUrl    String?
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  resolvedAt  DateTime?
+}
+
+model Permit {
+  id                 String         @id @default(cuid())
+  type               PermitType
+  title              String
+  description        String
+  startDate          DateTime?
+  endDate            DateTime?
+  status             PermitStatus   @default(PENDING)
+  adminNotes         String?
+  supportingDocUrl   String?
+  neighborConsentUrl String?
+  finalDocUrl        String?
+  createdBy          User           @relation(fields: [createdById], references: [id])
+  createdById        String
+  assetBookings      AssetBooking[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  decidedAt          DateTime?
+}
+
+model Asset {
+  id       String         @id @default(cuid())
+  name     String         @unique
+  bookings AssetBooking[]
+}
+
+model AssetBooking {
+  id         String   @id @default(cuid())
+  asset      Asset    @relation(fields: [assetId], references: [id])
+  assetId    String
+  permit     Permit   @relation(fields: [permitId], references: [id])
+  permitId   String
+  borrowDate DateTime
+  returnDate DateTime
+  createdAt  DateTime @default(now())
+}
+
+model DirectoryMember {
+  id            String        @id @default(cuid())
+  roleType      DirectoryRole
+  position      String
+  fullName      String
+  phone         String
+  photoUrl      String?
+  scheduleShift ShiftStatus?
+  createdAt     DateTime      @default(now())
+}
+
+enum CameraStreamType {
+  IFRAME
+  HLS
+}
+
+model Camera {
+  id         String           @id @default(cuid())
+  name       String
+  location   String?
+  streamUrl  String
+  streamType CameraStreamType @default(IFRAME)
+  sortOrder  Int              @default(0)
+  createdAt  DateTime         @default(now())
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  eventDate   DateTime
+  location    String?
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdById String
+  rsvps       EventRSVP[]
+  createdAt   DateTime    @default(now())
+}
+
+model EventRSVP {
+  id        String     @id @default(cuid())
+  event     Event      @relation(fields: [eventId], references: [id])
+  eventId   String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  status    RsvpStatus
+  createdAt DateTime   @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model CashTransaction {
+  id          String              @id @default(cuid())
+  type        TransactionType
+  category    TransactionCategory
+  amount      Int
+  description String
+  date        DateTime            @default(now())
+  importKey   String?             @unique
+  createdAt   DateTime            @default(now())
+}
+
+model MonthlyDue {
+  id        String    @id @default(cuid())
+  house     House     @relation(fields: [houseId], references: [id])
+  houseId   String
+  year      Int
+  month     Int
+  amount    Int
+  isPaid    Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([houseId, year, month])
+}
+
+model Setting {
+  id             String  @id @default("singleton")
+  duesAmount     Int     @default(150000)
+  cashSheetUrl   String?
+  duesSheetUrl   String?
+}
