@@ -26,6 +26,7 @@ import type { Role, ResidencyStatus } from "@/app/generated/prisma/client";
 type Resident = {
   id: string;
   name: string;
+  email: string;
   role: Role;
   houseId: string | null;
   phone: string | null;
@@ -45,6 +46,8 @@ export function ResidentActions({
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [name, setName] = useState(resident.name);
+  const [email, setEmail] = useState(resident.email);
+  const [phone, setPhone] = useState(resident.phone ?? "");
   const [role, setRole] = useState<Role>(resident.role);
   const [houseId, setHouseId] = useState<string | null>(resident.houseId);
   const [residencyStatus, setResidencyStatus] = useState<ResidencyStatus | null>(resident.residencyStatus);
@@ -57,6 +60,8 @@ export function ResidentActions({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
+        email,
+        phone: phone || null,
         role,
         houseId,
         residencyStatus,
@@ -113,6 +118,27 @@ export function ResidentActions({
             </div>
 
             <div className="flex flex-col gap-2">
+              <Label htmlFor={`email-${resident.id}`}>Email</Label>
+              <Input
+                id={`email-${resident.id}`}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor={`phone-${resident.id}`}>No. WhatsApp</Label>
+              <Input
+                id={`phone-${resident.id}`}
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="08xxxxxxxxxx"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Label>Role</Label>
               <Select items={roleLabels} value={role} onValueChange={(v) => v && setRole(v as Role)}>
                 <SelectTrigger className="w-full">
@@ -137,7 +163,7 @@ export function ResidentActions({
               <Label>Status Huni</Label>
               <Select
                 items={residencyStatusLabels}
-                value={residencyStatus ?? undefined}
+                value={residencyStatus}
                 onValueChange={(v) => setResidencyStatus((v as ResidencyStatus) ?? null)}
               >
                 <SelectTrigger className="w-full">

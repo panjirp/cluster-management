@@ -150,7 +150,7 @@ export function DirectoryMemberCard({
 							{member.roleType === "SATPAM" && (
 								<Select
 									items={shiftStatusLabels}
-									value={member.scheduleShift ?? undefined}
+									value={member.scheduleShift}
 									onValueChange={(v) => v && updateShift(v)}
 								>
 									<SelectTrigger size="sm" className="w-32">

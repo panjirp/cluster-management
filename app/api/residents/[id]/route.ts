@@ -18,6 +18,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    if (parsed.data.email && parsed.data.email !== existing.email) {
+      const emailTaken = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+      if (emailTaken) {
+        return NextResponse.json({ error: "Email sudah dipakai akun lain." }, { status: 409 });
+      }
+    }
+
     const { password, ...rest } = parsed.data;
 
     const user = await prisma.user.update({

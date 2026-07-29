@@ -47,7 +47,7 @@ export function ComplaintForm() {
     }
 
     toast.success("Pengaduan berhasil dikirim.");
-    router.push("/complaints");
+    router.back();
     router.refresh();
   }
 

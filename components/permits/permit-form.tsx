@@ -67,7 +67,7 @@ export function PermitForm() {
     }
 
     toast.success("Permohonan izin berhasil dikirim.");
-    router.push("/permits");
+    router.back();
     router.refresh();
   }
 

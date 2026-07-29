@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import path from "path";
 import { randomUUID } from "crypto";
-import { getStore } from "@netlify/blobs";
+import { saveUpload } from "@/lib/save-upload";
 import { requireUser, UnauthorizedError } from "@/lib/session";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -13,13 +11,6 @@ const EXT_BY_TYPE: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
 };
-
-// On Netlify, the deployed function's filesystem is read-only, so uploaded
-// files can't be written to disk — they're stored in Netlify Blobs instead
-// and served back through /api/uploads/[filename]. Locally (and on any
-// traditional server with a writable filesystem), files still go straight
-// to public/uploads for simplicity.
-const useBlobStore = !!process.env.NETLIFY;
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,18 +32,11 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const filename = `${randomUUID()}.${EXT_BY_TYPE[file.type]}`;
 
-    if (useBlobStore) {
-      const store = getStore("uploads");
-      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-      await store.set(filename, arrayBuffer, { metadata: { contentType: file.type } });
-      return NextResponse.json({ url: `/api/uploads/${filename}` }, { status: 201 });
-    }
-
-    const filepath = path.join(process.cwd(), "public", "uploads", filename);
-    await writeFile(filepath, buffer);
-    return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
+    const url = await saveUpload(buffer, filename, file.type);
+    return NextResponse.json({ url }, { status: 201 });
   } catch (error) {
     if (error instanceof UnauthorizedError) return NextResponse.json({ error: error.message }, { status: 401 });
-    throw error;
+    console.error("Upload failed:", error);
+    return NextResponse.json({ error: "Gagal mengunggah file. Coba lagi." }, { status: 500 });
   }
 }

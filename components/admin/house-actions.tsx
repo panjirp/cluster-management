@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
+import { EditHouseDialog } from "@/components/admin/edit-house-dialog";
 import { houseStatusValues, houseStatusLabels } from "@/lib/validations/house";
 import type { HouseStatus } from "@/app/generated/prisma/client";
 
@@ -12,10 +13,14 @@ export function HouseActions({
   houseId,
   blockNumber,
   currentStatus,
+  residentName,
+  contactPhone,
 }: {
   houseId: string;
   blockNumber: string;
   currentStatus: HouseStatus;
+  residentName: string | null;
+  contactPhone: string | null;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -65,6 +70,7 @@ export function HouseActions({
           ))}
         </SelectContent>
       </Select>
+      <EditHouseDialog houseId={houseId} blockNumber={blockNumber} residentName={residentName} contactPhone={contactPhone} />
       <ConfirmDeleteButton
         title={`Hapus rumah ${blockNumber}?`}
         description="Data iuran bulanan rumah ini juga akan terhapus. Tindakan ini tidak bisa dibatalkan."

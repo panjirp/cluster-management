@@ -101,8 +101,8 @@ export function AddDirectoryMemberForm({ onSuccess }: { onSuccess?: () => void }
           <Label htmlFor="scheduleShift">Shift Saat Ini</Label>
           <Select
             items={shiftStatusLabels}
-            value={watch("scheduleShift")}
-            onValueChange={(v) => setValue("scheduleShift", v as CreateDirectoryMemberInput["scheduleShift"])}
+            value={watch("scheduleShift") ?? null}
+            onValueChange={(v) => setValue("scheduleShift", v ?? undefined)}
           >
             <SelectTrigger id="scheduleShift">
               <SelectValue placeholder="Pilih shift" />

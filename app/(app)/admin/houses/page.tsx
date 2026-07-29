@@ -17,6 +17,7 @@ export default async function AdminHousesPage() {
     blockNumber: house.blockNumber,
     statusHuni: house.statusHuni,
     contactPhone: house.contactPhone,
+    residentName: house.residentName,
     residentNames: house.residents.map((r) => r.name).join(", ") || house.residentName || "",
   }));
 

@@ -85,6 +85,11 @@ export function AddResidentForm({
       </div>
 
       <div className="flex flex-col gap-2">
+        <Label htmlFor="phone">No. WhatsApp (opsional)</Label>
+        <Input id="phone" type="tel" {...register("phone")} placeholder="0812xxxxxxx" />
+      </div>
+
+      <div className="flex flex-col gap-2">
         <Label htmlFor="role">Role</Label>
         <Select items={roleLabels} value={role} onValueChange={(v) => setValue("role", v as CreateUserInput["role"])}>
           <SelectTrigger id="role">
@@ -116,8 +121,8 @@ export function AddResidentForm({
             <Label htmlFor="residencyStatus">Status Huni</Label>
             <Select
               items={residencyStatusLabels}
-              value={watch("residencyStatus")}
-              onValueChange={(v) => setValue("residencyStatus", v as CreateUserInput["residencyStatus"])}
+              value={watch("residencyStatus") ?? null}
+              onValueChange={(v) => setValue("residencyStatus", v ?? undefined)}
             >
               <SelectTrigger id="residencyStatus">
                 <SelectValue placeholder="Pilih status" />

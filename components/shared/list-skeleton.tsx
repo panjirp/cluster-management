@@ -31,3 +31,43 @@ export function CardGridSkeleton({ cards = 8 }: { cards?: number }) {
     </div>
   );
 }
+
+export function FormSkeleton({ fields = 5 }: { fields?: number }) {
+  return (
+    <div className="max-w-lg space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="space-y-4">
+        {Array.from({ length: fields }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+          </div>
+        ))}
+        <Skeleton className="h-9 w-32 rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+export function DetailSkeleton() {
+  return (
+    <div className="max-w-2xl space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-56" />
+        <Skeleton className="h-4 w-72" />
+      </div>
+      <div className="space-y-3 rounded-lg border p-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+      <div className="space-y-3 rounded-lg border p-4">
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    </div>
+  );
+}

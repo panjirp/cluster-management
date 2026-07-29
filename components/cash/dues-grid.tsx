@@ -193,7 +193,84 @@ export function DuesGrid({
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      {/* Mobile: card list, no horizontal scroll needed */}
+      <div className="space-y-2 sm:hidden">
+        {filtered.map((house) => (
+          <div key={house.id} className="space-y-2 rounded-lg border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {canManage && house.due && !house.due.isPaid && (
+                  <Checkbox
+                    checked={selected.has(house.due.id)}
+                    onCheckedChange={(checked) => toggleSelect(house.due!.id, checked === true)}
+                    aria-label={`Pilih ${house.blockNumber}`}
+                  />
+                )}
+                <span className="font-medium">{house.blockNumber}</span>
+              </div>
+              {house.due ? (
+                <Badge
+                  variant="outline"
+                  className={
+                    house.due.isPaid
+                      ? "border-transparent bg-green-500/15 text-green-700 dark:text-green-400"
+                      : "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                  }
+                >
+                  {house.due.isPaid ? "Lunas" : "Belum Bayar"}
+                </Badge>
+              ) : (
+                <Badge variant="outline">Belum Dibuat</Badge>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="text-muted-foreground">{house.ownerName ?? "-"}</span>
+              <span>{house.due ? formatRupiah(house.due.amount) : "-"}</span>
+            </div>
+            {canManage && house.due && (
+              <div className="flex flex-wrap justify-end gap-2 pt-1">
+                {!house.due.isPaid &&
+                  (house.contactPhone ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={
+                        <a
+                          href={buildDuesReminderUrl(
+                            house.contactPhone,
+                            house.blockNumber,
+                            MONTH_LABELS[month - 1],
+                            year,
+                            house.due.amount
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Kirim Pengingat WA
+                        </a>
+                      }
+                    />
+                  ) : (
+                    <Button variant="outline" size="sm" disabled title="Nomor WA belum diisi">
+                      Kirim Pengingat WA
+                    </Button>
+                  ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={pendingId === house.due.id}
+                  onClick={() => togglePaid(house.due!.id, !house.due!.isPaid)}
+                >
+                  {house.due.isPaid ? "Tandai Belum Bayar" : "Tandai Lunas"}
+                </Button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden overflow-x-auto rounded-lg border sm:block">
       <Table>
         <TableHeader>
           <TableRow>

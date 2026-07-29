@@ -17,7 +17,8 @@ export const createHouseSchema = z.object({
 export type CreateHouseInput = z.infer<typeof createHouseSchema>;
 
 export const updateHouseSchema = z.object({
-  contactPhone: z.string().max(20).optional(),
+  contactPhone: z.string().max(20).nullable().optional(),
+  residentName: z.string().max(100).nullable().optional(),
   statusHuni: z.enum(houseStatusValues).optional(),
   mapX: z.number().min(0).max(100).nullable().optional(),
   mapY: z.number().min(0).max(100).nullable().optional(),

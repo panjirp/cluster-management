@@ -30,6 +30,7 @@ type HouseRow = {
   blockNumber: string;
   statusHuni: HouseStatus;
   contactPhone: string | null;
+  residentName: string | null;
   residentNames: string;
 };
 
@@ -149,7 +150,13 @@ export function HousesList({ houses }: { houses: HouseRow[] }) {
                     <p className="text-xs text-muted-foreground">WA: {house.contactPhone}</p>
                   )}
                 </div>
-                <HouseActions houseId={house.id} blockNumber={house.blockNumber} currentStatus={house.statusHuni} />
+                <HouseActions
+                  houseId={house.id}
+                  blockNumber={house.blockNumber}
+                  currentStatus={house.statusHuni}
+                  residentName={house.residentName}
+                  contactPhone={house.contactPhone}
+                />
               </CardContent>
             </Card>
           ))}
