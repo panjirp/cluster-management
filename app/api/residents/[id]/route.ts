@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, UnauthorizedError, ForbiddenError } from "@/lib/session";
 import { updateUserSchema } from "@/lib/validations/user";
+import { logActivity } from "@/lib/activity-log";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -72,6 +73,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       prisma.eventRSVP.deleteMany({ where: { userId: id } }),
       prisma.user.delete({ where: { id } }),
     ]);
+
+    await logActivity(
+      session.user.name ?? session.user.email ?? "Admin",
+      "DELETE_RESIDENT",
+      `Menghapus akun warga "${existing.name}" (${existing.email})`
+    );
 
     return NextResponse.json({ ok: true });
   } catch (error) {

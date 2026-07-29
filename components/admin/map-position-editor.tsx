@@ -122,7 +122,7 @@ export function MapPositionEditor({ houses: initialHouses }: { houses: HouseRow[
                 setSearch("");
               }}
               className={cn(
-                "rounded-md border px-2 py-1 text-xs",
+                "cursor-pointer rounded-md border px-2 py-1 text-xs",
                 h.mapX !== null ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted"
               )}
             >

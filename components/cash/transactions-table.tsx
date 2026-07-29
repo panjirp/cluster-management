@@ -1,12 +1,61 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DeleteTransactionButton } from "@/components/cash/delete-transaction-button";
+import { Pagination } from "@/components/shared/pagination";
 import { transactionCategoryLabels } from "@/lib/validations/cash";
 import { useQueryState } from "@/lib/use-query-state";
+import { cn } from "@/lib/utils";
+
+const PAGE_SIZE = 25;
+
+type SortField = "date" | "amount";
+type SortDir = "asc" | "desc";
+
+function SortableHead({
+  label,
+  field,
+  sortField,
+  sortDir,
+  onSort,
+  className,
+}: {
+  label: string;
+  field: SortField;
+  sortField: SortField;
+  sortDir: SortDir;
+  onSort: (field: SortField) => void;
+  className?: string;
+}) {
+  const active = sortField === field;
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className={cn(
+          "inline-flex cursor-pointer items-center gap-1 hover:text-foreground",
+          className?.includes("text-right") && "flex-row-reverse"
+        )}
+      >
+        {label}
+        {active ? (
+          sortDir === "asc" ? (
+            <ArrowUp className="size-3.5" />
+          ) : (
+            <ArrowDown className="size-3.5" />
+          )
+        ) : (
+          <ArrowUpDown className="size-3.5 opacity-40" />
+        )}
+      </button>
+    </TableHead>
+  );
+}
 
 const ALL_TIME = "__all__";
 const THIS_MONTH = "this_month";
@@ -67,18 +116,50 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
   const [range, setRange] = useQueryState("range", ALL_TIME);
   const [type, setType] = useQueryState("type", ALL_TYPES);
   const [category, setCategory] = useQueryState("category", ALL_CATEGORIES);
+  const [pageStr, setPageStr] = useQueryState("page", "1");
+  const [sortField, setSortField] = useQueryState("sortField", "date" as SortField);
+  const [sortDir, setSortDir] = useQueryState("sortDir", "desc" as SortDir);
+  const page = Math.max(1, Number(pageStr) || 1);
+
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  }
 
   const categoryItems = useMemo(() => ({ [ALL_CATEGORIES]: "Semua Kategori", ...transactionCategoryLabels }), []);
 
   const filtered = useMemo(
     () =>
-      transactions.filter((tx) => {
-        if (!isInRange(new Date(tx.date), range)) return false;
-        if (type !== ALL_TYPES && tx.type !== type) return false;
-        if (category !== ALL_CATEGORIES && tx.category !== category) return false;
-        return true;
-      }),
-    [transactions, range, type, category]
+      transactions
+        .filter((tx) => {
+          if (!isInRange(new Date(tx.date), range)) return false;
+          if (type !== ALL_TYPES && tx.type !== type) return false;
+          if (category !== ALL_CATEGORIES && tx.category !== category) return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const dir = sortDir === "asc" ? 1 : -1;
+          if (sortField === "amount") return (a.amount - b.amount) * dir;
+          return (new Date(a.date).getTime() - new Date(b.date).getTime()) * dir;
+        }),
+    [transactions, range, type, category, sortField, sortDir]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  useEffect(() => {
+    if (page !== 1) setPageStr("1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range, type, category]);
+
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
   );
 
   return (
@@ -133,7 +214,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
         <>
           {/* Mobile: card list, no horizontal scroll needed */}
           <div className="space-y-2 sm:hidden">
-            {filtered.map((tx) => (
+            {paginated.map((tx) => (
               <div key={tx.id} className="space-y-1.5 rounded-lg border p-3">
                 <div className="flex items-center justify-between gap-2">
                   <Badge
@@ -175,16 +256,29 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tanggal</TableHead>
+                  <SortableHead
+                    label="Tanggal"
+                    field="date"
+                    sortField={sortField as SortField}
+                    sortDir={sortDir as SortDir}
+                    onSort={handleSort}
+                  />
                   <TableHead>Tipe</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead>Keterangan</TableHead>
-                  <TableHead className="text-right">Nominal</TableHead>
+                  <SortableHead
+                    label="Nominal"
+                    field="amount"
+                    sortField={sortField as SortField}
+                    sortDir={sortDir as SortDir}
+                    onSort={handleSort}
+                    className="text-right"
+                  />
                   {isBendahara && <TableHead className="text-right">Aksi</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((tx) => (
+                {paginated.map((tx) => (
                   <TableRow key={tx.id}>
                     <TableCell className="whitespace-nowrap">{formatDate(tx.date)}</TableCell>
                     <TableCell>
@@ -212,6 +306,8 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
               </TableBody>
             </Table>
           </div>
+
+          <Pagination page={currentPage} totalPages={totalPages} onPageChange={(p) => setPageStr(p.toString())} />
         </>
       )}
     </div>

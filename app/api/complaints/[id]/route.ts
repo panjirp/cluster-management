@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, requireAdmin, UnauthorizedError, ForbiddenError } from "@/lib/session";
 import { updateComplaintSchema, complaintStatusLabels } from "@/lib/validations/complaint";
 import { notifyUser } from "@/lib/notify";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const { id } = await params;
     const body = await req.json();
     const parsed = updateComplaintSchema.safeParse(body);
@@ -57,6 +58,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         "Status pengaduan diperbarui",
         `${complaint.title}: ${complaintStatusLabels[parsed.data.status]}`,
         `/complaints/${complaint.id}`
+      );
+      await logActivity(
+        session.user.name ?? session.user.email ?? "Admin",
+        "UPDATE_COMPLAINT_STATUS",
+        `Mengubah status pengaduan "${complaint.title}" menjadi ${complaintStatusLabels[parsed.data.status]}`
       );
     }
 

@@ -5,6 +5,7 @@ import { requireUser, requireAdmin, UnauthorizedError, ForbiddenError } from "@/
 import { updatePermitSchema, permitStatusLabels, permitTypeLabels } from "@/lib/validations/permit";
 import { generatePermitPdf } from "@/lib/pdf";
 import { notifyUser } from "@/lib/notify";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const { id } = await params;
     const body = await req.json();
     const parsed = updatePermitSchema.safeParse(body);
@@ -74,6 +75,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         "Status perizinan diperbarui",
         `${permitTypeLabels[permit.type]}: ${permitStatusLabels[parsed.data.status]}`,
         `/permits/${permit.id}`
+      );
+      await logActivity(
+        session.user.name ?? session.user.email ?? "Admin",
+        "UPDATE_PERMIT_STATUS",
+        `Mengubah status perizinan "${permit.title}" menjadi ${permitStatusLabels[parsed.data.status]}`
       );
     }
 

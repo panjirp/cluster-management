@@ -45,3 +45,36 @@ export function computeTotals(transactions: CashTransaction[]) {
     { income: 0, expense: 0, balance: 0 }
   );
 }
+
+export function getAvailableYears(transactions: CashTransaction[]): number[] {
+  const years = new Set(transactions.map((tx) => tx.date.getFullYear()));
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+export type CategoryBreakdown = {
+  category: CashTransaction["category"];
+  type: CashTransaction["type"];
+  amount: number;
+};
+
+export function buildAnnualSummary(transactions: CashTransaction[], year: number) {
+  const inYear = transactions.filter((tx) => tx.date.getFullYear() === year);
+  const totals = computeTotals(inYear);
+
+  const byCategory = new Map<string, CategoryBreakdown>();
+  for (const tx of inYear) {
+    const key = `${tx.type}:${tx.category}`;
+    const entry = byCategory.get(key) ?? { category: tx.category, type: tx.type, amount: 0 };
+    entry.amount += tx.amount;
+    byCategory.set(key, entry);
+  }
+
+  return {
+    year,
+    income: totals.income,
+    expense: totals.expense,
+    balance: totals.balance,
+    transactionCount: inYear.length,
+    byCategory: Array.from(byCategory.values()).sort((a, b) => b.amount - a.amount),
+  };
+}

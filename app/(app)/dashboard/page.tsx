@@ -7,12 +7,25 @@ import {
   Users,
   PlusCircle,
   CalendarClock,
+  History,
   type LucideIcon,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { computeTotals } from "@/lib/cash";
+
+const activityActionLabels: Record<string, string> = {
+  UPDATE_COMPLAINT_STATUS: "Pengaduan",
+  UPDATE_PERMIT_STATUS: "Perizinan",
+  DELETE_RESIDENT: "Warga",
+  DELETE_HOUSE: "Rumah",
+};
+
+function formatDateTime(date: Date) {
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -111,14 +124,19 @@ export default async function DashboardPage() {
             accent="green"
           />
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Button render={<Link href="/complaints/new">Buat Pengaduan</Link>} />
+          <Button variant="outline" render={<Link href="/permits/new">Ajukan Izin</Link>} />
+        </div>
       </div>
     );
   }
 
   if (role === "ADMIN") {
-    const [openComplaints, pendingPermits] = await Promise.all([
+    const [openComplaints, pendingPermits, recentActivity] = await Promise.all([
       prisma.complaint.count({ where: { status: { not: "RESOLVED" } } }),
       prisma.permit.count({ where: { status: "PENDING" } }),
+      prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
     ]);
 
     return (
@@ -149,6 +167,34 @@ export default async function DashboardPage() {
             icon={Users}
             accent="violet"
           />
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium">Aktivitas Terbaru</h2>
+            <Link href="/admin/activity-log" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <History className="size-4" />
+              Lihat semua
+            </Link>
+          </div>
+          {recentActivity.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Belum ada aktivitas.</p>
+          ) : (
+            <div className="space-y-2">
+              {recentActivity.map((log) => (
+                <Card key={log.id}>
+                  <CardContent className="py-3">
+                    <p className="text-sm">
+                      <span className="font-medium">{log.actorName}</span> — {log.description}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {activityActionLabels[log.action] ?? log.action} · {formatDateTime(log.createdAt)}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );

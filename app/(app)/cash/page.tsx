@@ -46,6 +46,7 @@ export default async function CashPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" render={<a href="/api/cash/transactions/export">Export CSV</a>} />
+          <Button variant="outline" render={<Link href="/cash/annual">Rekap Tahunan</Link>} />
           <Button variant="outline" render={<Link href="/cash/dues">Iuran Bulanan</Link>} />
           {isBendahara && <ImportSheetDialog defaultSheetUrl={setting?.cashSheetUrl} />}
           {isBendahara && (

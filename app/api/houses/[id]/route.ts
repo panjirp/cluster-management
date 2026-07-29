@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, UnauthorizedError, ForbiddenError } from "@/lib/session";
 import { updateHouseSchema } from "@/lib/validations/house";
+import { logActivity } from "@/lib/activity-log";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -28,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const { id } = await params;
 
     const existing = await prisma.house.findUnique({
@@ -48,6 +49,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       prisma.monthlyDue.deleteMany({ where: { houseId: id } }),
       prisma.house.delete({ where: { id } }),
     ]);
+
+    await logActivity(
+      session.user.name ?? session.user.email ?? "Admin",
+      "DELETE_HOUSE",
+      `Menghapus rumah "${existing.blockNumber}"`
+    );
 
     return NextResponse.json({ ok: true });
   } catch (error) {

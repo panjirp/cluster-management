@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { MessageSquareWarning, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ComplaintStatusBadge } from "@/components/complaints/complaint-status-badge";
@@ -37,9 +40,20 @@ export type ComplaintRow = {
   createdByBlock: string | null;
 };
 
-export function ComplaintsList({ complaints, isWarga }: { complaints: ComplaintRow[]; isWarga: boolean }) {
+export function ComplaintsList({
+  complaints,
+  isWarga,
+  canManage,
+}: {
+  complaints: ComplaintRow[];
+  isWarga: boolean;
+  canManage?: boolean;
+}) {
+  const router = useRouter();
   const [status, setStatus] = useQueryState("status", ALL_STATUS);
   const [query, setQuery] = useQueryState("q", "");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkPending, setBulkPending] = useState(false);
 
   const statusItems = useMemo(() => ({ [ALL_STATUS]: "Semua Status", ...complaintStatusLabels }), []);
 
@@ -53,9 +67,59 @@ export function ComplaintsList({ complaints, isWarga }: { complaints: ComplaintR
     return true;
   });
 
+  const selectableIds = filtered.filter((c) => c.status !== "RESOLVED").map((c) => c.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+
+  function toggleSelectAll(checked: boolean) {
+    setSelected(checked ? new Set(selectableIds) : new Set());
+  }
+
+  function toggleSelect(id: string, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  async function bulkResolve() {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+
+    setBulkPending(true);
+    const results = await Promise.all(
+      ids.map((id) =>
+        fetch(`/api/complaints/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "RESOLVED" }),
+        }).then((res) => res.ok)
+      )
+    );
+    setBulkPending(false);
+
+    const failedCount = results.filter((ok) => !ok).length;
+    if (failedCount > 0) {
+      toast.error(`Gagal menandai ${failedCount} dari ${ids.length} pengaduan.`);
+    } else {
+      toast.success(`${ids.length} pengaduan ditandai selesai.`);
+    }
+    setSelected(new Set());
+    router.refresh();
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
+        {canManage && selectableIds.length > 0 && (
+          <Checkbox
+            checked={allSelected}
+            indeterminate={selected.size > 0 && !allSelected}
+            onCheckedChange={(checked) => toggleSelectAll(checked === true)}
+            aria-label="Pilih semua yang belum selesai"
+          />
+        )}
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -78,6 +142,18 @@ export function ComplaintsList({ complaints, isWarga }: { complaints: ComplaintR
         <span className="text-xs text-muted-foreground">
           {filtered.length} dari {complaints.length} pengaduan
         </span>
+
+        {canManage && selected.size > 0 && (
+          <div className="ml-auto flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-sm">
+            <span>{selected.size} dipilih</span>
+            <Button size="sm" disabled={bulkPending} onClick={bulkResolve}>
+              {bulkPending ? "Memproses..." : "Tandai Selesai"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+              Batal
+            </Button>
+          </div>
+        )}
       </div>
 
       {complaints.length === 0 ? (
@@ -99,29 +175,39 @@ export function ComplaintsList({ complaints, isWarga }: { complaints: ComplaintR
       ) : (
         <div className="space-y-4">
           {filtered.map((complaint) => (
-            <Link key={complaint.id} href={`/complaints/${complaint.id}`} className="group block">
-              <Card
-                className={`border-l-4 ${statusAccent[complaint.status]} transition-all group-hover:-translate-y-0.5 group-hover:shadow-md`}
-              >
-                <CardContent className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 space-y-1.5">
-                    <p className="truncate text-base font-semibold group-hover:text-primary">{complaint.title}</p>
-                    <p className="line-clamp-1 text-sm text-muted-foreground">{complaint.description}</p>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline">{complaintCategoryLabels[complaint.category]}</Badge>
-                      <span>{formatDate(complaint.createdAt)}</span>
-                      {!isWarga && (
-                        <span>
-                          · {complaint.createdByName}
-                          {complaint.createdByBlock ? ` (${complaint.createdByBlock})` : ""}
-                        </span>
-                      )}
+            <Card
+              key={complaint.id}
+              className={`border-l-4 ${statusAccent[complaint.status]} transition-all hover:-translate-y-0.5 hover:shadow-md`}
+            >
+              <CardContent className="flex items-center gap-4">
+                {canManage && complaint.status !== "RESOLVED" && (
+                  <Checkbox
+                    checked={selected.has(complaint.id)}
+                    onCheckedChange={(checked) => toggleSelect(complaint.id, checked === true)}
+                    aria-label={`Pilih ${complaint.title}`}
+                  />
+                )}
+                <Link href={`/complaints/${complaint.id}`} className="group min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0 space-y-1.5">
+                      <p className="truncate text-base font-semibold group-hover:text-primary">{complaint.title}</p>
+                      <p className="line-clamp-1 text-sm text-muted-foreground">{complaint.description}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant="outline">{complaintCategoryLabels[complaint.category]}</Badge>
+                        <span>{formatDate(complaint.createdAt)}</span>
+                        {!isWarga && (
+                          <span>
+                            · {complaint.createdByName}
+                            {complaint.createdByBlock ? ` (${complaint.createdByBlock})` : ""}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <ComplaintStatusBadge status={complaint.status} />
                   </div>
-                  <ComplaintStatusBadge status={complaint.status} />
-                </CardContent>
-              </Card>
-            </Link>
+                </Link>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

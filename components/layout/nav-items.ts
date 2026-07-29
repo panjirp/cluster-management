@@ -10,6 +10,7 @@ import {
   Home,
   Users,
   Video,
+  History,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,4 +31,5 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/houses", label: "Data Rumah", icon: Home },
   { href: "/admin/residents", label: "Data Warga", icon: Users },
   { href: "/admin/map-editor", label: "Editor Posisi Peta", icon: MapPin },
+  { href: "/admin/activity-log", label: "Log Aktivitas", icon: History },
 ];

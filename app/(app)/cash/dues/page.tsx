@@ -35,14 +35,41 @@ export default async function DuesPage({
   const year = Number(params.year ?? now.getFullYear());
   const month = Number(params.month ?? now.getMonth() + 1);
 
-  const houses = (
-    await prisma.house.findMany({
+  const [houses, priorDues] = await Promise.all([
+    prisma.house.findMany({
       include: {
         monthlyDues: { where: { year, month } },
         residents: { select: { name: true } },
       },
-    })
-  ).sort((a, b) => compareBlockNumber(a.blockNumber, b.blockNumber));
+    }),
+    // History up to the viewed month, used to compute how many consecutive
+    // months a house has been unpaid (including the viewed month itself).
+    prisma.monthlyDue.findMany({
+      where: { OR: [{ year: { lt: year } }, { year, month: { lte: month } }] },
+      select: { houseId: true, year: true, month: true, isPaid: true },
+    }),
+  ]);
+  houses.sort((a, b) => compareBlockNumber(a.blockNumber, b.blockNumber));
+
+  const duesByHouse = new Map<string, { year: number; month: number; isPaid: boolean }[]>();
+  for (const due of priorDues) {
+    const list = duesByHouse.get(due.houseId) ?? [];
+    list.push(due);
+    duesByHouse.set(due.houseId, list);
+  }
+
+  function countOverdueMonths(houseId: string): number {
+    const list = (duesByHouse.get(houseId) ?? []).sort((a, b) => b.year - a.year || b.month - a.month);
+    let count = 0;
+    let cursor = { year, month };
+    for (const due of list) {
+      if (due.year !== cursor.year || due.month !== cursor.month) break;
+      if (due.isPaid) break;
+      count += 1;
+      cursor = cursor.month === 1 ? { year: cursor.year - 1, month: 12 } : { year: cursor.year, month: cursor.month - 1 };
+    }
+    return count;
+  }
 
   const setting = await prisma.setting.upsert({
     where: { id: "singleton" },
@@ -63,6 +90,7 @@ export default async function DuesPage({
           paidAt: house.monthlyDues[0].paidAt?.toISOString() ?? null,
         }
       : null,
+    overdueMonths: house.monthlyDues[0] && !house.monthlyDues[0].isPaid ? countOverdueMonths(house.id) : 0,
   }));
 
   const prev = shiftMonth(year, month, -1);

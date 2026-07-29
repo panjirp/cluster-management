@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -87,11 +88,13 @@ export function NotificationBell({
       />
       <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
         <div className="flex items-center justify-between px-1.5 py-1">
-          <DropdownMenuLabel className="p-0">Notifikasi</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="p-0">Notifikasi</DropdownMenuLabel>
+          </DropdownMenuGroup>
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
             >
               <CheckCheck className="size-3.5" />
               Tandai semua dibaca

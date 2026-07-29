@@ -28,7 +28,7 @@ export function UserMenu({ name, role }: { name: string; role: Role }) {
         render={
           <button
             aria-label={`Menu akun ${name}`}
-            className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground outline-none hover:bg-muted/70"
+            className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full bg-muted text-muted-foreground outline-none hover:bg-muted/70"
           >
             <User className="size-4.5" />
           </button>

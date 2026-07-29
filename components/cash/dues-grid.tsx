@@ -21,10 +21,25 @@ type HouseDue = {
   ownerName: string | null;
   contactPhone: string | null;
   due: { id: string; amount: number; isPaid: boolean; paidAt: string | null } | null;
+  overdueMonths: number;
 };
 
 function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+}
+
+function statusBadgeText(house: HouseDue) {
+  if (!house.due) return "Belum Dibuat";
+  if (house.due.isPaid) return "Lunas";
+  if (house.overdueMonths >= 2) return `Menunggak ${house.overdueMonths} bulan`;
+  return "Belum Bayar";
+}
+
+function statusBadgeClass(house: HouseDue) {
+  if (!house.due) return "";
+  if (house.due.isPaid) return "border-transparent bg-green-500/15 text-green-700 dark:text-green-400";
+  if (house.overdueMonths >= 2) return "border-transparent bg-red-500/15 text-red-700 dark:text-red-400";
+  return "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-400";
 }
 
 const MONTH_LABELS = [
@@ -173,7 +188,7 @@ export function DuesGrid({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari nomor rumah atau nama pemilik…"
-            className="w-56"
+            className="w-72"
           />
           <span className="text-xs text-muted-foreground">
             {filtered.length} dari {houses.length} rumah
@@ -208,20 +223,9 @@ export function DuesGrid({
                 )}
                 <span className="font-medium">{house.blockNumber}</span>
               </div>
-              {house.due ? (
-                <Badge
-                  variant="outline"
-                  className={
-                    house.due.isPaid
-                      ? "border-transparent bg-green-500/15 text-green-700 dark:text-green-400"
-                      : "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                  }
-                >
-                  {house.due.isPaid ? "Lunas" : "Belum Bayar"}
-                </Badge>
-              ) : (
-                <Badge variant="outline">Belum Dibuat</Badge>
-              )}
+              <Badge variant="outline" className={statusBadgeClass(house)}>
+                {statusBadgeText(house)}
+              </Badge>
             </div>
             <div className="flex items-center justify-between gap-2 text-sm">
               <span className="text-muted-foreground">{house.ownerName ?? "-"}</span>
@@ -309,20 +313,9 @@ export function DuesGrid({
               <TableCell className="text-muted-foreground">{house.ownerName ?? "-"}</TableCell>
               <TableCell>{house.due ? formatRupiah(house.due.amount) : "-"}</TableCell>
               <TableCell>
-                {house.due ? (
-                  <Badge
-                    variant="outline"
-                    className={
-                      house.due.isPaid
-                        ? "border-transparent bg-green-500/15 text-green-700 dark:text-green-400"
-                        : "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                    }
-                  >
-                    {house.due.isPaid ? "Lunas" : "Belum Bayar"}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">Belum Dibuat</Badge>
-                )}
+                <Badge variant="outline" className={statusBadgeClass(house)}>
+                  {statusBadgeText(house)}
+                </Badge>
               </TableCell>
               {canManage && (
                 <TableCell className="text-right space-x-2 whitespace-nowrap">

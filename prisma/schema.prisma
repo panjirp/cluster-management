@@ -120,6 +120,14 @@ model Notification {
   @@index([userId, read])
 }
 
+model ActivityLog {
+  id          String   @id @default(cuid())
+  actorName   String
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+}
+
 model House {
   id           String       @id @default(cuid())
   blockNumber  String       @unique

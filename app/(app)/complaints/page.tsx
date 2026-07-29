@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Pengaduan" };
 export default async function ComplaintsPage() {
   const session = await requireUser();
   const isWarga = session.user.role === "WARGA";
+  const isAdmin = session.user.role === "ADMIN";
 
   const complaints = await prisma.complaint.findMany({
     where: isWarga ? { createdById: session.user.id } : undefined,
@@ -37,10 +38,13 @@ export default async function ComplaintsPage() {
             {isWarga ? "Daftar pengaduan yang Anda ajukan" : "Semua pengaduan warga"}
           </p>
         </div>
-        {isWarga && <Button render={<Link href="/complaints/new">Buat Pengaduan</Link>} />}
+        <div className="flex gap-2">
+          {!isWarga && <Button variant="outline" render={<a href="/api/complaints/export">Export CSV</a>} />}
+          {isWarga && <Button render={<Link href="/complaints/new">Buat Pengaduan</Link>} />}
+        </div>
       </div>
 
-      <ComplaintsList complaints={rows} isWarga={isWarga} />
+      <ComplaintsList complaints={rows} isWarga={isWarga} canManage={isAdmin} />
     </div>
   );
 }

@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Perizinan" };
 export default async function PermitsPage() {
   const session = await requireUser();
   const isWarga = session.user.role === "WARGA";
+  const isAdmin = session.user.role === "ADMIN";
 
   const permits = await prisma.permit.findMany({
     where: isWarga ? { createdById: session.user.id } : undefined,
@@ -37,10 +38,13 @@ export default async function PermitsPage() {
             {isWarga ? "Daftar permohonan izin Anda" : "Semua permohonan izin warga"}
           </p>
         </div>
-        {isWarga && <Button render={<Link href="/permits/new">Ajukan Izin</Link>} />}
+        <div className="flex gap-2">
+          {!isWarga && <Button variant="outline" render={<a href="/api/permits/export">Export CSV</a>} />}
+          {isWarga && <Button render={<Link href="/permits/new">Ajukan Izin</Link>} />}
+        </div>
       </div>
 
-      <PermitsList permits={rows} isWarga={isWarga} />
+      <PermitsList permits={rows} isWarga={isWarga} canManage={isAdmin} />
     </div>
   );
 }

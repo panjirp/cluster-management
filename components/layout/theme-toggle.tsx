@@ -11,12 +11,12 @@ export function ThemeToggle() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return <Button variant="ghost" size="icon" aria-hidden />;
+  if (!mounted) return <Button variant="outline" size="icon-sm" aria-hidden />;
 
   return (
     <Button
-      variant="ghost"
-      size="icon"
+      variant="outline"
+      size="icon-sm"
       aria-label="Ganti tema"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
     >
