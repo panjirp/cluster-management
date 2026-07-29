@@ -4,7 +4,7 @@ Web aplikasi manajemen cluster perumahan Barcelona Cove: pengaduan (dengan foto)
 
 ## Stack
 
-Next.js (App Router) · TypeScript · Prisma (SQLite) · NextAuth v4 · Tailwind + shadcn/ui · pdf-lib · next-themes (PWA-ready)
+Next.js (App Router) · TypeScript · Prisma (PostgreSQL) · NextAuth v4 · Tailwind + shadcn/ui · pdf-lib · next-themes (PWA-ready)
 
 ## Role
 
@@ -14,17 +14,26 @@ Next.js (App Router) · TypeScript · Prisma (SQLite) · NextAuth v4 · Tailwind
 
 ## Menjalankan secara lokal
 
-Membutuhkan Node.js ≥ 18.18 (disarankan 20 LTS).
+Membutuhkan Node.js ≥ 20.9 dan PostgreSQL yang sudah jalan (lokal atau remote).
 
 ```bash
 npm install
-cp .env.example .env   # lalu isi NEXTAUTH_SECRET
+cp .env.example .env   # sesuaikan DATABASE_URL, lalu isi NEXTAUTH_SECRET
 npx prisma migrate dev
 npx prisma db seed
 npm run dev
 ```
 
 Buka [http://localhost:3000](http://localhost:3000).
+
+## Deploy ke production
+
+```bash
+npm run build   # juga menjalankan `prisma migrate deploy`
+npm start
+```
+
+`npm start` menyalakan server Node.js yang harus tetap hidup selama aplikasi diakses (pakai process manager seperti PM2, atau platform seperti Netlify/Vercel yang menanganinya otomatis) — bukan aplikasi statis yang bisa langsung disalin ke document root web server (Apache/IIS/htdocs).
 
 ### Akun contoh (dari seed)
 
