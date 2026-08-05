@@ -15,7 +15,7 @@ export async function GET() {
       new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(tx.date),
       tx.type === "INCOME" ? "Pemasukan" : "Pengeluaran",
       transactionCategoryLabels[tx.category],
-      tx.description,
+      String(tx.description ?? ""),
       String(tx.amount),
     ]);
 

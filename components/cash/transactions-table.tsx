@@ -93,7 +93,7 @@ export type TransactionRow = {
   id: string;
   type: "INCOME" | "EXPENSE";
   category: keyof typeof transactionCategoryLabels;
-  description: string;
+  description: string | null;
   amount: number;
   date: string;
 };
@@ -143,7 +143,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
           if (!isInRange(new Date(tx.date), range)) return false;
           if (type !== ALL_TYPES && tx.type !== type) return false;
           if (category !== ALL_CATEGORIES && tx.category !== category) return false;
-          if (query && !tx.description.toLowerCase().includes(query.toLowerCase())) return false;
+          if (query && !(tx.description ?? "").toLowerCase().includes(query.toLowerCase())) return false;
           return true;
         })
         .sort((a, b) => {
@@ -240,7 +240,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
                   </Badge>
                   <span className="text-xs text-muted-foreground">{formatDate(tx.date)}</span>
                 </div>
-                <p className="text-sm">{tx.description}</p>
+                <p className="text-sm">{tx.description ?? "—"}</p>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs text-muted-foreground">{transactionCategoryLabels[tx.category]}</span>
                   <span
@@ -313,7 +313,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
                       </Badge>
                     </TableCell>
                     <TableCell>{transactionCategoryLabels[tx.category]}</TableCell>
-                    <TableCell>{tx.description}</TableCell>
+                    <TableCell>{tx.description ?? "—"}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">{formatRupiah(tx.amount)}</TableCell>
                     {isBendahara && (
                       <TableCell className="text-right space-x-1 whitespace-nowrap">

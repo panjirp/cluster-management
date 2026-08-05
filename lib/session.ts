@@ -34,6 +34,6 @@ export async function requireAdmin(): Promise<Session> {
 
 export async function requireBendahara(): Promise<Session> {
   const session = await requireUser();
-  if (session.user.role !== Role.BENDAHARA) throw new ForbiddenError();
+  if (session.user.role !== Role.BENDAHARA && session.user.role !== Role.ADMIN) throw new ForbiddenError();
   return session;
 }

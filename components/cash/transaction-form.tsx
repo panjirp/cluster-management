@@ -28,7 +28,7 @@ export type TransactionFormInitial = {
   type: "INCOME" | "EXPENSE";
   category: CreateTransactionInput["category"];
   amount: number;
-  description: string;
+  description: string | null;
   date: string;
 };
 
@@ -48,7 +48,7 @@ export function TransactionForm({ transaction }: { transaction?: TransactionForm
       ? {
           type: transaction.type,
           category: transaction.category,
-          description: transaction.description,
+          description: transaction.description ?? "",
           amount: transaction.amount,
           date: transaction.date.slice(0, 10),
         }

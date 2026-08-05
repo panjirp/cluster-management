@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { computeTotals } from "@/lib/cash";
+import GroupChat from "@/components/chat/group-chat";
 
 const activityActionLabels: Record<string, string> = {
   UPDATE_COMPLAINT_STATUS: "Pengaduan",
@@ -185,10 +186,49 @@ export default async function DashboardPage() {
             accent="green"
           />
         </div>
+
+        {session.user.houseId && due?.isPaid && (
+          <div className="rounded-lg border p-4">
+            <p className="text-sm font-medium mb-2">Bukti Pembayaran Iuran Bulan Ini</p>
+            {due.paymentProofUrl ? (
+              <a
+                href={due.paymentProofUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-muted"
+              >
+                Lihat Bukti Pembayaran
+              </a>
+            ) : (
+              <form
+                action={`/api/cash/dues/proof?id=${due.id}`}
+                method="POST"
+                encType="multipart/form-data"
+                className="flex flex-wrap items-center gap-2"
+              >
+                <input
+                  type="file"
+                  name="file"
+                  accept="image/*,.pdf"
+                  className="block h-8 w-56 cursor-pointer rounded-md border px-3 text-sm file:mr-2 file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground hover:bg-muted"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Upload Bukti
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <Button render={<Link href="/complaints/new">Buat Pengaduan</Link>} />
           <Button variant="outline" render={<Link href="/permits/new">Ajukan Izin</Link>} />
         </div>
+
+        <GroupChat />
 
         <UpcomingEventsSection events={upcomingEvents} />
       </div>
@@ -261,6 +301,8 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        <GroupChat />
+
         <UpcomingEventsSection events={upcomingEvents} />
       </div>
     );
@@ -306,6 +348,8 @@ export default async function DashboardPage() {
           accent="blue"
         />
       </div>
+
+      <GroupChat />
 
       <UpcomingEventsSection events={upcomingEvents} />
     </div>
