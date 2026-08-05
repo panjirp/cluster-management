@@ -2,7 +2,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # ---- Builder : generate prisma client + build Next.js ----
 FROM node:22-alpine AS builder
