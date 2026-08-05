@@ -33,7 +33,7 @@ nano .env   # isi semua variabel yang dibutuhkan
 openssl rand -base64 32   # gunakan untuk NEXTAUTH_SECRET
 openssl rand -base64 32   # gunakan untuk CRON_SECRET
 
-# Setelah itu, pastikan di .env ada:
+# Pastikan di .env ada:
 POSTGRES_USER=barcelona
 POSTGRES_PASSWORD=<password-anda>
 POSTGRES_DB=barcelonacove
@@ -45,7 +45,7 @@ MAYAR_API_KEY=<dari-mayar.id>
 
 ---
 
-## Langkah 3 — Deploy dengan Docker Compose
+## Langkah 3 — Deploy pertama kali dengan Docker Compose
 
 ```bash
 cd /opt/cluster-management
@@ -80,16 +80,39 @@ exit
 
 ## Langkah 5 — SSL Certificate (Let's Encrypt)
 
-Nginx sudah dikonfigurasi untuk Let's Encrypt. Langsung akses domain untuk触发 verifikasi:
+Nginx sudah dikonfigurasi untuk Let's Encrypt:
 
 ```bash
-# Setelah DNS sudah mengarah ke VPS, jalankan:
-docker compose exec nginx certbot certonly --webroot -w /var/www/certbot -d www.barcelonacove.web.id --email admin@barcelonacove.web.id --agree-tos --no-eff-email
+# Setelah DNS sudah mengarah ke VPS:
+docker compose exec nginx certbot certonly \
+  --webroot -w /var/www/certbot \
+  -d www.barcelonacove.web.id \
+  --email admin@barcelonacove.web.id \
+  --agree-tos --no-eff-email
 ```
 
 ---
 
-## Langkah 6 — Update Aplikasi (setelah ada perubahan kode)
+## Langkah 6 — Auto-Deploy dengan Cron Job (Hermes)
+
+Setelah setup pertama selesai, kamu bisa setup auto-deploy dari Hermes:
+
+1. Isi `deploy/.env.vps` dengan `VPS_HOST` dan `VPS_USER`
+2. Di Hermes, buat cron job dengan:
+   - **Schedule:** sesuai kebutuhan (misal `0 2 * * *` untuk jam 2 malam)
+   - **Script:** `deploy/deploy-to-vps.sh`
+   - **Environment:** `VPS_HOST=<ip-vps>`, `VPS_USER=root`
+
+Script akan otomatis:
+- SSH ke VPS
+- `git pull origin master`
+- `docker compose up -d --build`
+- `prisma migrate deploy`
+- Cek status container
+
+---
+
+## Update Manual (tanpa cron)
 
 ```bash
 cd /opt/cluster-management
@@ -106,7 +129,7 @@ docker compose exec app npx prisma migrate deploy   # jika ada migration baru
 |---|---|
 | App tidak bisa konek ke DB | Cek `DATABASE_URL`, pastikan container `db` running |
 | HTTPS tidak bisa | Pastikan port 80 & 443 terbuka di firewall VPS |
-| Upload bukti pembayaran tidak bisa | Pastikan volume `uploads` terpasang, atau setup Netlify Blobs |
+| Upload bukti pembayaran tidak bisa | Pastikan volume `uploads` terpasang |
 | Mayar error | Pastikan `MAYAR_API_KEY` sudah di-set di `.env` |
 
 ---
@@ -115,7 +138,7 @@ docker compose exec app npx prisma migrate deploy   # jika ada migration baru
 
 1. **Domain harus mengarah ke VPS** sebelum Langkah 5 (SSL)
 2. **Password PostgreSQL** di `.env` harus sama dengan di VPS
-3. **Uploads disimpan di volume Docker** `uploads:/app/public/uploads` — bertahan meski container di-recreate
+3. **Uploads disimpan di volume Docker** `uploads:/app/public/uploads`
 4. **Backup database secara berkala:**
    ```bash
    docker compose exec db pg_dump -U barcelona barcelonacove > backup_$(date +%F).sql
