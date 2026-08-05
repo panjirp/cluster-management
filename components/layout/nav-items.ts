@@ -22,7 +22,7 @@ export const mainNavItems: NavItem[] = [
   { href: "/complaints", label: "Pengaduan", icon: MessageSquareWarning },
   { href: "/permits", label: "Perizinan", icon: FileCheck2 },
   { href: "/cash", label: "Uang Kas", icon: Wallet },
-  { href: "/cash/dues/proof-submit", label: "Ajukan Pembayaran", icon: Upload },
+  { href: "/cash/dues/proof-submit", label: "Pembayaran Kas", icon: Upload },
   { href: "/map", label: "Peta Klaster", icon: Map },
   { href: "/cctv", label: "CCTV", icon: Video },
   { href: "/directory", label: "Direktori", icon: Contact },

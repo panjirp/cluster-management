@@ -298,7 +298,7 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
       <div>
         <h1 className="text-2xl font-semibold">Pengajuan Pembayaran Iuran</h1>
         <p className="text-sm text-muted-foreground">
-          Upload bukti pembayaran atau bayar langsung via Mayar
+          Upload bukti pembayaran atau bayar langsung via QRIS
         </p>
       </div>
 

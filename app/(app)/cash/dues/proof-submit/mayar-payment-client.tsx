@@ -75,7 +75,7 @@ function MayarPaymentDialog({
 
       if (!res.ok) {
         throw new Error(
-          (data.error as string) || "Gagal membuat invoice Mayar."
+          (data.error as string) || "Gagal membuat permintaan pembayaran."
         );
       }
 
@@ -106,7 +106,7 @@ function MayarPaymentDialog({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <CreditCard className="size-4" />
-          Pembayaran Online — Mayar
+          Pembayaran Online — QRIS
         </CardTitle>
         <CardDescription>
           Bayar iuran {MONTH_LABELS[due.month - 1]} {due.year} —{" "}
@@ -175,7 +175,7 @@ function MayarPaymentDialog({
             className="w-full"
           >
             <CreditCard className="mr-2 size-4" />
-            {loading ? "Membuat Invoice…" : "Bayar dengan Mayar"}
+            {loading ? "Membuat Pembayaran…" : "Pembayaran dengan QRIS"}
           </Button>
         )}
 
@@ -195,7 +195,7 @@ export function MayarPaymentSection({ due }: { due: DueRow }) {
       <div>
         <h3 className="text-lg font-semibold">Pembayaran Online</h3>
         <p className="text-sm text-muted-foreground">
-          Bayar iuran melalui Mayar — QRIS / transfer bank
+          Bayar iuran melalui QRIS
         </p>
       </div>
 

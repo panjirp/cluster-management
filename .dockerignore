@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.hermes
+*.log
+.env
+.env.*
+!.env.example
+nginx
+deploy
+README.md
+.cline
