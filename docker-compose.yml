@@ -27,6 +27,7 @@ services:
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       CRON_SECRET: ${CRON_SECRET}
       MAYAR_API_KEY: ${MAYAR_API_KEY}
+      FONNTE_TOKEN: ${FONNTE_TOKEN:-}
       # Opsional: untuk upload file via Netlify Blobs. Kosongkan jika tidak dipakai
       # (perhatikan: tanpa ini upload bukti pembayaran mungkin butuh penyesuaian).
       NETLIFY_SITE_ID: ${NETLIFY_SITE_ID:-}

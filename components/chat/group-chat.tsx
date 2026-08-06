@@ -52,7 +52,8 @@ export default function GroupChat() {
   const [houses, setHouses] = useState<HouseOption[]>([]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const prevLastIdRef = useRef<string | null>(null);
 
   // Fetch houses on mount
   useEffect(() => {
@@ -88,9 +89,28 @@ export default function GroupChat() {
     return () => clearInterval(id);
   }, []);
 
-  // Scroll to bottom when messages change
+  // Scroll ke bawah hanya di dalam kotak chat, hanya saat pesan baru tiba
+  // (tidak menycroll seluruh halaman dan tidak mengganggu saat polling).
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesRef.current;
+    if (!container || messages.length === 0) return;
+
+    const lastId = messages[messages.length - 1]?.id ?? null;
+    const isFirstLoad = prevLastIdRef.current === null;
+    const hasNewMessage = lastId !== prevLastIdRef.current;
+    prevLastIdRef.current = lastId;
+
+    if (!isFirstLoad && !hasNewMessage) return;
+
+    // Jika user sedang membaca pesan lama (scroll ke atas), jangan paksa turun.
+    const nearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 160;
+    if (!isFirstLoad && !nearBottom) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: isFirstLoad ? "auto" : "smooth",
+    });
   }, [messages]);
 
   // Send message
@@ -139,7 +159,7 @@ export default function GroupChat() {
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             Memuat pesan…
@@ -181,7 +201,6 @@ export default function GroupChat() {
             </div>
           ))
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Input area */}

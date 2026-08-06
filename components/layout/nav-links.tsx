@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/app/generated/prisma/client";
-import { mainNavItems, adminNavItems, type NavItem } from "@/components/layout/nav-items";
+import { mainNavItems, bendaharaNavItems, adminNavItems, type NavItem } from "@/components/layout/nav-items";
 
 function NavLink({
   item,
@@ -23,10 +23,10 @@ function NavLink({
       href={item.href}
       onClick={onNavigate}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         active
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary/20"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
     >
       <Icon className="size-4 shrink-0" />
@@ -62,6 +62,23 @@ export function NavLinks({
           onNavigate={onNavigate}
         />
       ))}
+
+      {(role === "ADMIN" || role === "BENDAHARA") && (
+        <>
+          <p className="mt-4 mb-1 px-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Pengurus
+          </p>
+          {bendaharaNavItems.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              active={pathname.startsWith(item.href)}
+              badgeCount={badges?.[item.href]}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </>
+      )}
 
       {role === "ADMIN" && (
         <>

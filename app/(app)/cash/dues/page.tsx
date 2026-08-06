@@ -8,6 +8,7 @@ import { GenerateDuesButton } from "@/components/cash/generate-dues-button";
 import { DuesAmountSetting } from "@/components/cash/dues-amount-setting";
 import { ImportDuesSheetDialog } from "@/components/cash/import-dues-sheet-dialog";
 import { compareBlockNumber } from "@/lib/sort";
+import { countOverdueMonths } from "@/lib/cash";
 import { BackLink } from "@/components/shared/back-link";
 
 export const metadata: Metadata = { title: "Iuran Bulanan" };
@@ -48,31 +49,6 @@ export default async function DuesPage({
     duesByHouse.set(due.houseId, list);
   }
 
-  // Walks backward from the viewed month. A month with an unpaid (or missing,
-  // as long as the house has dues history from before) record extends the
-  // streak; a paid month or reaching before the house's earliest known due
-  // ends it. This treats "never generated" as "belum dibuat" only when the
-  // house has no history at all — once history exists, a gap counts as unpaid.
-  function countOverdueMonths(houseId: string): number {
-    const list = duesByHouse.get(houseId) ?? [];
-    if (list.length === 0) return 0;
-
-    const dueByKey = new Map(list.map((d) => [`${d.year}-${d.month}`, d]));
-    const earliest = list.reduce((min, d) =>
-      d.year < min.year || (d.year === min.year && d.month < min.month) ? d : min
-    );
-
-    let count = 0;
-    let cursor = { year, month };
-    while (cursor.year > earliest.year || (cursor.year === earliest.year && cursor.month >= earliest.month)) {
-      const due = dueByKey.get(`${cursor.year}-${cursor.month}`);
-      if (due?.isPaid) break;
-      count += 1;
-      cursor = cursor.month === 1 ? { year: cursor.year - 1, month: 12 } : { year: cursor.year, month: cursor.month - 1 };
-    }
-    return count;
-  }
-
   const setting = await prisma.setting.upsert({
     where: { id: "singleton" },
     update: {},
@@ -95,7 +71,7 @@ export default async function DuesPage({
           }
         : null,
       hasHistory,
-      overdueMonths: hasHistory ? countOverdueMonths(house.id) : 0,
+      overdueMonths: hasHistory ? countOverdueMonths(duesByHouse, house.id, year, month) : 0,
     };
   });
 

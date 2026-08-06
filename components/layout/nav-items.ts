@@ -12,6 +12,7 @@ import {
   Video,
   History,
   Upload,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,6 +28,10 @@ export const mainNavItems: NavItem[] = [
   { href: "/cctv", label: "CCTV", icon: Video },
   { href: "/directory", label: "Direktori", icon: Contact },
   { href: "/events", label: "Info & Acara", icon: CalendarDays },
+];
+
+export const bendaharaNavItems: NavItem[] = [
+  { href: "/cash/dues/reminders", label: "Kirim Pengingat WA", icon: Send },
 ];
 
 export const adminNavItems: NavItem[] = [

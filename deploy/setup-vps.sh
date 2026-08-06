@@ -55,6 +55,7 @@ if [ ! -f ".env" ]; then
   echo "  NEXTAUTH_SECRET=$(openssl rand -base64 32)"
   echo "  CRON_SECRET=$(openssl rand -base64 32)"
   echo "  MAYAR_API_KEY=<dari-mayar.id>"
+  echo "  FONNTE_TOKEN=<dari-fonnte.com> (opsional, untuk kirim pengingat WA)"
   echo ""
   read -p "Sudah diisi? (y/n): " confirm
   if [ "$confirm" != "y" ]; then

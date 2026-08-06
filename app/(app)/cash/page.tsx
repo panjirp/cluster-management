@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Download } from "lucide-react";
+import { Download, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ function formatRupiah(value: number) {
 export default async function CashPage() {
   const session = await requireUser();
   const isBendahara = session.user.role === "BENDAHARA";
+  const canRemind = isBendahara || session.user.role === "ADMIN";
 
   const [transactions, setting] = await Promise.all([
     prisma.cashTransaction.findMany({ orderBy: { date: "desc" } }),
@@ -57,6 +58,9 @@ export default async function CashPage() {
           />
           <Button variant="outline" render={<Link href="/cash/annual">Rekap Tahunan</Link>} />
           <Button variant="outline" render={<Link href="/cash/dues">Iuran Bulanan</Link>} />
+          {canRemind && (
+            <Button variant="outline" render={<Link href="/cash/dues/reminders"><Send data-icon="inline-start" /> Kirim Pengingat WA</Link>} />
+          )}
           {isBendahara && <ImportSheetDialog defaultSheetUrl={setting?.cashSheetUrl} />}
           {isBendahara && (
             <Button render={<Link href="/cash/transactions/new">Tambah Transaksi</Link>} />

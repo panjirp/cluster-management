@@ -9,6 +9,9 @@ import {
   CalendarClock,
   CalendarDays,
   History,
+  ArrowUpRight,
+  LayoutDashboard,
+  CheckCircle2,
   type LucideIcon,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -37,38 +40,43 @@ function formatRupiah(value: number) {
 }
 
 const chipStyles = {
-  amber: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  blue: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  green: "bg-green-500/15 text-green-600 dark:text-green-400",
-  violet: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
+  amber: "bg-amber-500/15 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400",
+  blue: "bg-blue-500/15 text-blue-600 dark:bg-sky-400/10 dark:text-sky-400",
+  green: "bg-green-500/15 text-green-600 dark:bg-lime-400/10 dark:text-lime-400",
+  violet: "bg-violet-500/15 text-violet-600 dark:bg-violet-400/10 dark:text-violet-400",
 } as const;
 
 function StatCard({
   href,
   title,
   value,
-  hint,
   icon: Icon,
   accent,
 }: {
   href: string;
   title: string;
   value: string;
-  hint?: string;
   icon: LucideIcon;
   accent: keyof typeof chipStyles;
 }) {
   return (
-    <Link href={href} className="group block">
-      <Card className="transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
-        <CardContent className="flex items-center gap-4">
-          <div className={`grid size-11 shrink-0 place-items-center rounded-xl ${chipStyles[accent]}`}>
-            <Icon className="size-5" />
+    <Link href={href} className="group block h-full">
+      <Card className="relative h-full overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-[0_12px_40px_-16px_color-mix(in_oklab,var(--primary)_45%,transparent)]">
+        <div className="pointer-events-none absolute -top-10 -right-10 size-28 rounded-full bg-primary/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
+        <CardContent className="flex h-full flex-col gap-5">
+          <div className="flex items-start justify-between">
+            <div
+              className={`grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-inset ring-foreground/10 ${chipStyles[accent]}`}
+            >
+              <Icon className="size-5" />
+            </div>
+            <ArrowUpRight className="size-4 text-muted-foreground/40 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="truncate text-2xl font-semibold group-hover:text-primary">{value}</p>
-            {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+          <div className="mt-auto">
+            <p className="truncate text-3xl font-bold tracking-tight tabular-nums transition-colors group-hover:text-primary">
+              {value}
+            </p>
+            <p className="mt-1 truncate text-sm text-muted-foreground">{title}</p>
           </div>
         </CardContent>
       </Card>
@@ -76,8 +84,63 @@ function StatCard({
   );
 }
 
-function formatEventDate(date: Date) {
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short" }).format(date);
+function DashboardHeader({ name }: { name: string }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex items-center gap-3.5">
+        <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 ring-1 ring-inset ring-primary/20">
+          <LayoutDashboard className="size-6 text-primary" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+              <span className="relative inline-flex size-2 rounded-full bg-primary" />
+            </span>
+            <p className="text-[11px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+              Portal Cluster
+            </p>
+          </div>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Selamat datang, <span className="font-semibold text-foreground">{name}</span> 👋
+      </p>
+    </div>
+  );
+}
+
+function SectionHeader({
+  title,
+  href,
+  linkLabel,
+  icon: Icon,
+}: {
+  title: string;
+  href: string;
+  linkLabel: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
+        <Icon className="size-4 text-primary" />
+        {title}
+      </h2>
+      <Link
+        href={href}
+        className="group flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
+      >
+        {linkLabel}
+        <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+      </Link>
+    </div>
+  );
+}
+
+function formatEventTime(date: Date) {
+  return new Intl.DateTimeFormat("id-ID", { timeStyle: "short" }).format(date);
 }
 
 async function getUpcomingEvents() {
@@ -97,32 +160,45 @@ async function getUpcomingEvents() {
 }
 
 function UpcomingEventsSection({ events }: { events: Awaited<ReturnType<typeof getUpcomingEvents>> }) {
+  const dayFormatter = new Intl.DateTimeFormat("id-ID", { day: "2-digit" });
+  const monthFormatter = new Intl.DateTimeFormat("id-ID", { month: "short" });
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium">Acara Mendatang</h2>
-        <Link href="/events" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <CalendarDays className="size-4" />
-          Lihat semua
-        </Link>
-      </div>
+      <SectionHeader title="Acara Mendatang" href="/events" linkLabel="Lihat semua" icon={CalendarDays} />
       {events.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Belum ada acara mendatang.</p>
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="text-sm text-muted-foreground">Belum ada acara mendatang.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-2">
           {events.map((event) => (
             <Link key={event.id} href={`/events/${event.id}`} className="group block">
-              <Card className="transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
-                <CardContent className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0 space-y-0.5">
-                    <p className="truncate text-sm font-medium group-hover:text-primary">{event.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatEventDate(event.eventDate)}
-                      {event.location ? ` · ${event.location}` : ""}
-                    </p>
+              <Card className="transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-[0_8px_30px_-14px_color-mix(in_oklab,var(--primary)_40%,transparent)]">
+                <CardContent className="flex items-center justify-between gap-3 py-3.5">
+                  <div className="flex min-w-0 items-center gap-3.5">
+                    <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary/10 ring-1 ring-inset ring-primary/20">
+                      <div className="text-center leading-none">
+                        <p className="text-base font-bold text-primary">{dayFormatter.format(event.eventDate)}</p>
+                        <p className="mt-0.5 text-[9px] font-semibold tracking-wide text-muted-foreground uppercase">
+                          {monthFormatter.format(event.eventDate)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="truncate text-sm font-semibold transition-colors group-hover:text-primary">
+                        {event.title}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        Pukul {formatEventTime(event.eventDate)}
+                        {event.location ? ` · ${event.location}` : ""}
+                      </p>
+                    </div>
                   </div>
                   <Badge variant="secondary" className="shrink-0">
-                    {event.goingCount} Akan Hadir
+                    {event.goingCount} Hadir
                   </Badge>
                 </CardContent>
               </Card>
@@ -159,10 +235,9 @@ export default async function DashboardPage() {
 
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Selamat datang, {session.user.name}</p>
-        </div>
+        <DashboardHeader name={session.user.name ?? "Warga"} />
+        <UpcomingEventsSection events={upcomingEvents} />
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             href="/complaints"
@@ -188,39 +263,54 @@ export default async function DashboardPage() {
         </div>
 
         {session.user.houseId && due?.isPaid && (
-          <div className="rounded-lg border p-4">
-            <p className="text-sm font-medium mb-2">Bukti Pembayaran Iuran Bulan Ini</p>
-            {due.paymentProofUrl ? (
-              <a
-                href={due.paymentProofUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-muted"
-              >
-                Lihat Bukti Pembayaran
-              </a>
-            ) : (
-              <form
-                action={`/api/cash/dues/proof?id=${due.id}`}
-                method="POST"
-                encType="multipart/form-data"
-                className="flex flex-wrap items-center gap-2"
-              >
-                <input
-                  type="file"
-                  name="file"
-                  accept="image/*,.pdf"
-                  className="block h-8 w-56 cursor-pointer rounded-md border px-3 text-sm file:mr-2 file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground hover:bg-muted"
-                />
-                <button
-                  type="submit"
-                  className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 ring-1 ring-inset ring-primary/20">
+                  <CheckCircle2 className="size-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">Iuran bulan ini sudah lunas</p>
+                  <p className="text-xs text-muted-foreground">
+                    {due.paymentProofUrl
+                      ? "Bukti pembayaran tersimpan."
+                      : "Unggah bukti pembayaran untuk arsip bendahara."}
+                  </p>
+                </div>
+              </div>
+              {due.paymentProofUrl ? (
+                <a
+                  href={due.paymentProofUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors hover:border-primary/40 hover:text-primary"
                 >
-                  Upload Bukti
-                </button>
-              </form>
-            )}
-          </div>
+                  Lihat Bukti Pembayaran
+                  <ArrowUpRight className="size-4" />
+                </a>
+              ) : (
+                <form
+                  action={`/api/cash/dues/proof?id=${due.id}`}
+                  method="POST"
+                  encType="multipart/form-data"
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <input
+                    type="file"
+                    name="file"
+                    accept="image/*,.pdf"
+                    className="block h-9 w-64 cursor-pointer rounded-lg border px-3 text-sm file:mr-2 file:h-7 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:text-sm file:font-medium file:text-primary hover:bg-muted"
+                  />
+                  <button
+                    type="submit"
+                    className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    Upload Bukti
+                  </button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         <div className="flex flex-wrap gap-2">
@@ -229,8 +319,6 @@ export default async function DashboardPage() {
         </div>
 
         <GroupChat />
-
-        <UpcomingEventsSection events={upcomingEvents} />
       </div>
     );
   }
@@ -245,10 +333,9 @@ export default async function DashboardPage() {
 
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Selamat datang, {session.user.name}</p>
-        </div>
+        <DashboardHeader name={session.user.name ?? "Admin"} />
+        <UpcomingEventsSection events={upcomingEvents} />
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             href="/complaints"
@@ -274,26 +361,28 @@ export default async function DashboardPage() {
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">Aktivitas Terbaru</h2>
-            <Link href="/admin/activity-log" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-              <History className="size-4" />
-              Lihat semua
-            </Link>
-          </div>
+          <SectionHeader title="Aktivitas Terbaru" href="/admin/activity-log" linkLabel="Lihat semua" icon={History} />
           {recentActivity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Belum ada aktivitas.</p>
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-sm text-muted-foreground">Belum ada aktivitas.</p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-2">
               {recentActivity.map((log) => (
-                <Card key={log.id}>
-                  <CardContent className="py-3">
-                    <p className="text-sm">
-                      <span className="font-medium">{log.actorName}</span> — {log.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activityActionLabels[log.action] ?? log.action} · {formatDateTime(log.createdAt)}
-                    </p>
+                <Card key={log.id} className="transition-colors hover:border-primary/30">
+                  <CardContent className="flex items-start gap-3 py-3.5">
+                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                    <div className="min-w-0">
+                      <p className="text-sm">
+                        <span className="font-semibold">{log.actorName}</span>{" "}
+                        <span className="text-muted-foreground">— {log.description}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {activityActionLabels[log.action] ?? log.action} · {formatDateTime(log.createdAt)}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -302,8 +391,6 @@ export default async function DashboardPage() {
         </div>
 
         <GroupChat />
-
-        <UpcomingEventsSection events={upcomingEvents} />
       </div>
     );
   }
@@ -321,10 +408,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Selamat datang, {session.user.name}</p>
-      </div>
+      <DashboardHeader name={session.user.name ?? "Bendahara"} />
+      <UpcomingEventsSection events={upcomingEvents} />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           href="/cash"
@@ -350,8 +436,6 @@ export default async function DashboardPage() {
       </div>
 
       <GroupChat />
-
-      <UpcomingEventsSection events={upcomingEvents} />
     </div>
   );
 }

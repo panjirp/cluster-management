@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/shared/password-input";
 import { CopyrightFooter } from "@/components/layout/copyright-footer";
+import { GrassBackground, GRASS_ACCENT_LIME } from "@/components/shared/grass-background";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,14 +41,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#070b07] p-4 text-foreground">
+    <div className="relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#070b07] p-4 text-foreground">
+      {/* Background animasi partikel (konsisten dengan halaman lain) */}
+      <GrassBackground accentOverride={GRASS_ACCENT_LIME} />
       {/* Ambient green glows (Grass-style background) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(70rem 70rem at 50% -10%, rgba(105,255,40,0.14), transparent 60%), radial-gradient(50rem 50rem at 85% 110%, rgba(46,160,30,0.12), transparent 60%), radial-gradient(40rem 40rem at 10% 100%, rgba(0,0,0,0.6), transparent 60%)",
+            "radial-gradient(70rem 70rem at 50% -10%, rgba(171,246,0,0.12), transparent 60%), radial-gradient(50rem 50rem at 85% 110%, rgba(46,160,30,0.12), transparent 60%), radial-gradient(40rem 40rem at 10% 100%, rgba(0,0,0,0.6), transparent 60%)",
         }}
       />
       {/* Subtle vignette */}
@@ -63,7 +66,7 @@ export default function LoginPage() {
       <div className="relative z-10 flex w-full max-w-sm flex-col gap-5">
         {/* Brand / logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-white/95 p-2 shadow-[0_0_40px_-8px_rgba(184,255,0,0.55)] ring-1 ring-white/10">
+          <div className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-white/95 p-2 shadow-[0_0_40px_-8px_rgba(171,246,0,0.55)] ring-1 ring-white/10">
             <Image
               src="/bc.png"
               alt="Logo Barcelona Cove"
@@ -100,7 +103,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@barcelonacove.local"
-                className="h-11 rounded-xl border-white/10 bg-white/5 px-3.5 text-[0.95rem] text-white placeholder:text-white/35 focus-visible:border-[#b8ff00]/60 focus-visible:ring-[#b8ff00]/20"
+                className="h-11 rounded-xl border-white/10 bg-white/5 px-3.5 text-[0.95rem] text-white placeholder:text-white/35 focus-visible:border-[#abf600]/60 focus-visible:ring-[#abf600]/20"
               />
             </div>
 
@@ -115,7 +118,7 @@ export default function LoginPage() {
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  className="text-xs text-white/40 transition-colors hover:text-[#b8ff00]"
+                  className="text-xs text-white/40 transition-colors hover:text-[#abf600]"
                 >
                   Lupa password?
                 </a>
@@ -125,7 +128,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 rounded-xl border-white/10 bg-white/5 px-3.5 text-[0.95rem] text-white placeholder:text-white/35 focus-visible:border-[#b8ff00]/60 focus-visible:ring-[#b8ff00]/20"
+                className="h-11 rounded-xl border-white/10 bg-white/5 px-3.5 text-[0.95rem] text-white placeholder:text-white/35 focus-visible:border-[#abf600]/60 focus-visible:ring-[#abf600]/20"
               />
             </div>
 
@@ -138,7 +141,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-11 w-full rounded-xl bg-[#b8ff00] text-[0.95rem] font-semibold text-[#0b1a05] shadow-[0_10px_30px_-10px_rgba(184,255,0,0.7)] transition-all hover:bg-[#c9ff33] hover:shadow-[0_10px_34px_-8px_rgba(184,255,0,0.85)] active:translate-y-px disabled:opacity-60"
+              className="h-11 w-full rounded-xl bg-[#abf600] text-[0.95rem] font-semibold text-[#0b1a05] shadow-[0_10px_30px_-10px_rgba(171,246,0,0.7)] transition-all hover:bg-[#baff2b] hover:shadow-[0_10px_34px_-8px_rgba(171,246,0,0.85)] active:translate-y-px disabled:opacity-60"
             >
               {loading ? "Memproses..." : "Masuk"}
             </Button>

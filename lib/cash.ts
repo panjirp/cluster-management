@@ -34,6 +34,36 @@ export function buildMonthlySummary(transactions: CashTransaction[], monthsToSho
   return withBalance.slice(-monthsToShow);
 }
 
+/**
+ * Hitung berapa bulan berturut-turut sebuah rumah belum bayar, berjalan
+ * mundur dari bulan yang dilihat. Bulan tanpa catatan (tapi rumah punya
+ * riwayat) dihitung sebagai belum bayar; bulan lunas menghentikan hitungan.
+ */
+export function countOverdueMonths(
+  duesByHouse: Map<string, { year: number; month: number; isPaid: boolean }[]>,
+  houseId: string,
+  year: number,
+  month: number
+): number {
+  const list = duesByHouse.get(houseId) ?? [];
+  if (list.length === 0) return 0;
+
+  const dueByKey = new Map(list.map((d) => [`${d.year}-${d.month}`, d]));
+  const earliest = list.reduce((min, d) =>
+    d.year < min.year || (d.year === min.year && d.month < min.month) ? d : min
+  );
+
+  let count = 0;
+  let cursor = { year, month };
+  while (cursor.year > earliest.year || (cursor.year === earliest.year && cursor.month >= earliest.month)) {
+    const due = dueByKey.get(`${cursor.year}-${cursor.month}`);
+    if (due?.isPaid) break;
+    count += 1;
+    cursor = cursor.month === 1 ? { year: cursor.year - 1, month: 12 } : { year: cursor.year, month: cursor.month - 1 };
+  }
+  return count;
+}
+
 export function computeTotals(transactions: CashTransaction[]) {
   return transactions.reduce(
     (acc, tx) => {

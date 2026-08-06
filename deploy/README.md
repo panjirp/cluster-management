@@ -56,6 +56,7 @@ NEXTAUTH_URL=https://www.barcelonacove.web.id
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
 CRON_SECRET=$(openssl rand -base64 32)
 MAYAR_API_KEY=<dari-mayar.id>
+FONNTE_TOKEN=<dari-fonnte.com> (opsional, untuk kirim pengingat iuran via WhatsApp)
 ```
 
 ### 4. Start

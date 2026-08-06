@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DuesDonutChart } from "@/components/cash/dues-donut-chart";
-import { buildDuesReminderUrl } from "@/lib/whatsapp";
 import { compareBlockNumber } from "@/lib/sort";
 import { useQueryState } from "@/lib/use-query-state";
 
@@ -78,6 +77,7 @@ export function DuesGrid({
   const [houses, setHouses] = useState(initialHouses);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [bulkPending, setBulkPending] = useState(false);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [block, setBlock] = useQueryState("block", ALL_BLOCKS);
   const [query, setQuery] = useQueryState("q", "");
@@ -214,6 +214,27 @@ export function DuesGrid({
     setSelected(new Set());
   }
 
+  async function sendReminder(dueId: string) {
+    setSendingId(dueId);
+    try {
+      const res = await fetch("/api/whatsapp/dues-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dueId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(data.error ?? "Gagal mengirim pengingat WhatsApp.");
+        return;
+      }
+      toast.success("Pengingat WhatsApp terkirim.");
+    } catch {
+      toast.error("Gagal mengirim pengingat WhatsApp.");
+    } finally {
+      setSendingId(null);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <DuesDonutChart paid={paidCount} unpaid={unpaidCount} />
@@ -306,22 +327,11 @@ export function DuesGrid({
                     <Button
                       variant="outline"
                       size="sm"
-                      render={
-                        <a
-                          href={buildDuesReminderUrl(
-                            house.contactPhone,
-                            house.blockNumber,
-                            MONTH_LABELS[month - 1],
-                            year,
-                            house.due.amount
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Kirim Pengingat WA
-                        </a>
-                      }
-                    />
+                      disabled={sendingId === house.due.id}
+                      onClick={() => sendReminder(house.due!.id)}
+                    >
+                      {sendingId === house.due.id ? "Mengirim..." : "Kirim Pengingat WA"}
+                    </Button>
                   ) : (
                     <Button variant="outline" size="sm" disabled title="Nomor WA belum diisi">
                       Kirim Pengingat WA
@@ -400,22 +410,11 @@ export function DuesGrid({
                       <Button
                         variant="outline"
                         size="sm"
-                        render={
-                          <a
-                            href={buildDuesReminderUrl(
-                              house.contactPhone,
-                              house.blockNumber,
-                              MONTH_LABELS[month - 1],
-                              year,
-                              house.due.amount
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Kirim Pengingat WA
-                          </a>
-                        }
-                      />
+                        disabled={sendingId === house.due.id}
+                        onClick={() => sendReminder(house.due!.id)}
+                      >
+                        {sendingId === house.due.id ? "Mengirim..." : "Kirim Pengingat WA"}
+                      </Button>
                     ) : (
                       <Button variant="outline" size="sm" disabled title="Nomor WA belum diisi">
                         Kirim Pengingat WA
