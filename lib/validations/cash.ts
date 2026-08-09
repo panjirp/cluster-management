@@ -35,7 +35,8 @@ export const markDuePaidSchema = z.object({
 });
 
 export const updateSettingSchema = z.object({
-  duesAmount: z.coerce.number().int().positive("Nominal harus lebih dari 0"),
+  // min(0): iuran boleh 0 (mis. masa libur/coming soon) — nominal 0 = tidak ada tagihan
+  duesAmount: z.coerce.number().int().min(0, "Nominal tidak boleh negatif"),
 });
 
 export const importPreviewSchema = z.object({

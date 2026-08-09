@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { BackLink } from "@/components/shared/back-link";
@@ -7,7 +8,11 @@ import { AnnualCashSummary } from "@/components/cash/annual-cash-summary";
 export const metadata: Metadata = { title: "Rekap Tahunan Kas" };
 
 export default async function AnnualCashPage() {
-  await requireUser();
+  const session = await requireUser();
+  // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
+  if (session.user.role === "WARGA") {
+    redirect("/dashboard");
+  }
   const transactions = await prisma.cashTransaction.findMany({ orderBy: { date: "desc" } });
 
   return (

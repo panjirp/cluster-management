@@ -53,8 +53,9 @@ export function ChangePasswordForm({
     if (onSuccess) {
       onSuccess();
     } else {
-      router.push("/dashboard");
-      router.refresh();
+      // Hard navigation: pastikan cookie sesi (mustChangePassword=false) yang
+      // baru ter-update terbaca middleware saat masuk /dashboard
+      window.location.assign("/dashboard");
     }
   }
 

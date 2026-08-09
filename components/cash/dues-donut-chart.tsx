@@ -15,11 +15,11 @@ export function DuesDonutChart({ paid, unpaid }: { paid: number; unpaid: number 
   ];
 
   return (
-    <div className="h-64 w-full max-w-sm rounded-lg border bg-card p-4">
-      <p className="mb-2 text-sm font-medium text-muted-foreground">Kepatuhan Uang Kas Bulan Ini</p>
+    <div className="h-44 w-full max-w-sm rounded-lg border bg-card p-3 sm:h-48 sm:p-4 lg:h-64">
+      <p className="mb-1 text-sm font-medium text-muted-foreground sm:mb-2">Kepatuhan Uang Kas Bulan Ini</p>
       <ResponsiveContainer width="100%" height="85%">
         <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="82%" paddingAngle={2}>
             {data.map((entry) => (
               <Cell key={entry.name} fill={entry.color} />
             ))}

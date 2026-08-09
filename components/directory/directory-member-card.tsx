@@ -1,11 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Phone, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import {
 	Select,
 	SelectContent,
@@ -59,6 +68,9 @@ export function DirectoryMemberCard({
 	canManage: boolean;
 }) {
 	const router = useRouter();
+	const [detailOpen, setDetailOpen] = useState(false);
+
+	const roleLabel = member.roleType === "SATPAM" ? "Satpam" : "Pengurus";
 
 	async function updateShift(shift: string) {
 		const res = await fetch(`/api/directory/${member.id}`, {
@@ -90,34 +102,123 @@ export function DirectoryMemberCard({
 	return (
 		<Card>
 			<CardContent className="flex items-center gap-4">
-				{member.photoUrl ? (
-					// eslint-disable-next-line @next/next/no-img-element
-					<img
-						src={member.photoUrl}
-						alt={member.fullName}
-						className="size-12 shrink-0 rounded-full object-cover"
+				<Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+					{/* Klik area profil → detail penuh */}
+					<DialogTrigger
+						render={
+							<div className="flex min-w-0 flex-1 cursor-pointer items-center gap-4 select-none">
+								{member.photoUrl ? (
+									// eslint-disable-next-line @next/next/no-img-element
+									<img
+										src={member.photoUrl}
+										alt={member.fullName}
+										className="size-12 shrink-0 rounded-full object-cover"
+									/>
+								) : (
+									<div
+										className={`grid size-12 shrink-0 place-items-center rounded-full text-sm font-semibold ${avatarStyle[member.roleType]}`}
+									>
+										{initials(member.fullName)}
+									</div>
+								)}
+								<div className="min-w-0 flex-1">
+									<p className="truncate font-medium">{member.fullName}</p>
+									<p className="truncate text-sm text-muted-foreground">
+										{member.position}
+									</p>
+									{member.roleType === "SATPAM" && member.scheduleShift && (
+										<Badge
+											variant="outline"
+											className={`mt-1 ${shiftStyle[member.scheduleShift]}`}
+										>
+											{shiftStatusLabels[member.scheduleShift]}
+										</Badge>
+									)}
+								</div>
+							</div>
+						}
 					/>
-				) : (
-					<div
-						className={`grid size-12 shrink-0 place-items-center rounded-full text-sm font-semibold ${avatarStyle[member.roleType]}`}
-					>
-						{initials(member.fullName)}
-					</div>
-				)}
-				<div className="min-w-0 flex-1">
-					<p className="truncate font-medium">{member.fullName}</p>
-					<p className="truncate text-sm text-muted-foreground">
-						{member.position}
-					</p>
-					{member.roleType === "SATPAM" && member.scheduleShift && (
-						<Badge
-							variant="outline"
-							className={`mt-1 ${shiftStyle[member.scheduleShift]}`}
-						>
-							{shiftStatusLabels[member.scheduleShift]}
-						</Badge>
-					)}
-				</div>
+
+					{/* Detail penuh */}
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle className="sr-only">Detail {member.fullName}</DialogTitle>
+							<DialogDescription className="sr-only">
+								Detail kontak {member.fullName}
+							</DialogDescription>
+						</DialogHeader>
+						<div className="flex flex-col items-center gap-3 pt-2 text-center">
+							{member.photoUrl ? (
+								// eslint-disable-next-line @next/next/no-img-element
+								<img
+									src={member.photoUrl}
+									alt={member.fullName}
+									className="size-24 rounded-full object-cover ring-2 ring-primary/20"
+								/>
+							) : (
+								<div
+									className={`grid size-24 place-items-center rounded-full text-2xl font-semibold ${avatarStyle[member.roleType]}`}
+								>
+									{initials(member.fullName)}
+								</div>
+							)}
+							<div className="space-y-1">
+								<h3 className="text-lg font-semibold">{member.fullName}</h3>
+								<div className="flex flex-wrap items-center justify-center gap-2">
+									<Badge variant="secondary">{roleLabel}</Badge>
+									<span className="text-sm text-muted-foreground">{member.position}</span>
+									{member.roleType === "SATPAM" && member.scheduleShift && (
+										<Badge
+											variant="outline"
+											className={shiftStyle[member.scheduleShift]}
+										>
+											{shiftStatusLabels[member.scheduleShift]}
+										</Badge>
+									)}
+								</div>
+							</div>
+						</div>
+
+						<div className="rounded-lg border p-3">
+							<p className="mb-1 text-xs font-medium text-muted-foreground">
+								Nomor WhatsApp / Telepon
+							</p>
+							{/* Nomor bisa diklik → redirect ke WhatsApp */}
+							<a
+								href={buildWaLink(member.phone)}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="font-medium text-primary underline-offset-4 hover:underline"
+							>
+								{member.phone}
+							</a>
+						</div>
+
+						<div className="grid grid-cols-2 gap-2">
+							<Button
+								variant="outline"
+								render={
+									<a href={`tel:${member.phone}`}>
+										<Phone data-icon="inline-start" />
+										Telepon
+									</a>
+								}
+							/>
+							<Button
+								render={
+									<a
+										href={buildWaLink(member.phone)}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<MessageCircle data-icon="inline-start" />
+										Chat WhatsApp
+									</a>
+								}
+							/>
+						</div>
+					</DialogContent>
+				</Dialog>
 				<div className="flex shrink-0 flex-col items-end gap-2">
 					<div className="flex gap-2">
 						<Button

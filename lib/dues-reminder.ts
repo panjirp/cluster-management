@@ -34,6 +34,16 @@ export async function sendHouseDueReminder(
   if (!house.contactPhone) {
     throw new HouseNoPhoneError(`Nomor WhatsApp rumah Blok ${house.blockNumber} belum diisi.`);
   }
+  // Data WA bisa berisi beberapa nomor dipisah " / " (kebijakan gabung WA).
+  // Pecah dulu, lalu kirim ke setiap nomor — jangan dikirim sebagai satu nomor
+  // raksasa (bug lama: "0821... / 0857..." jadi 27 digit yang ditolak Fonnte).
+  const phones = house.contactPhone
+    .split("/")
+    .map((p) => p.trim())
+    .filter((p) => /^\+?\d{9,15}$/.test(p.replace(/[\s.-]/g, "")));
+  if (phones.length === 0) {
+    throw new HouseNoPhoneError(`Nomor WhatsApp rumah Blok ${house.blockNumber} tidak valid.`);
+  }
 
   const due = await prisma.monthlyDue.findUnique({
     where: { houseId_year_month: { houseId, year, month } },
@@ -60,5 +70,8 @@ export async function sendHouseDueReminder(
     ownerName
   );
 
-  await sendWhatsAppMessage(house.contactPhone, text);
+  // Kirim ke setiap nomor (semua kontak). Berhenti jika ada yang gagal.
+  for (const phone of phones) {
+    await sendWhatsAppMessage(phone, text);
+  }
 }

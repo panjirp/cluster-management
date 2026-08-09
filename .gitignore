@@ -54,3 +54,14 @@ next-env.d.ts
 # uploaded files
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# credentials & secrets (JANGAN commit!)
+.env*
+!.env.example
+!.env.production.example
+fcm-service-account.json
+google-services.json
+*.keystore
+*.jks
+*keystore*.env
+.barcelona-keystore.env

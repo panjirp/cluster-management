@@ -81,7 +81,7 @@ export function ReminderSender({
   async function sendOne(row: ReminderHouse) {
     setSendingId(row.houseId);
     try {
-      const res = await fetch("/api/whatsapp/dues-reminders", {
+      const res = await fetch("/api/whatsapp/dues-reminder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ houseId: row.houseId, year, month }),
@@ -197,8 +197,8 @@ export function ReminderSender({
         </div>
       )}
 
-      {/* Mobile: kartu */}
-      <div className="space-y-2 sm:hidden">
+      {/* Compact: kartu untuk HP potrait & landscape (hingga 1023px), tabel di desktop */}
+      <div className="grid grid-cols-1 gap-2 lg:hidden sm:grid-cols-2">
         {rows.map((row) => {
           const badge = statusBadge(row);
           const sent = sentIds.has(row.houseId);
@@ -266,7 +266,7 @@ export function ReminderSender({
       </div>
 
       {/* Desktop: tabel */}
-      <div className="hidden overflow-x-auto rounded-lg border sm:block">
+      <div className="hidden overflow-x-auto rounded-lg border lg:block">
         <Table>
           <TableHeader>
             <TableRow>

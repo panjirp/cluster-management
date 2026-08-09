@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -19,6 +20,10 @@ export default async function DuesPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const session = await requireUser();
+  // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
+  if (session.user.role === "WARGA") {
+    redirect("/dashboard");
+  }
   const isBendahara = session.user.role === "BENDAHARA";
   const params = await searchParams;
 
@@ -81,7 +86,7 @@ export default async function DuesPage({
     <div className="space-y-6">
       <BackLink href="/cash" label="Kembali ke Uang Kas" />
       <div>
-        <h1 className="text-2xl font-semibold">Iuran Bulanan</h1>
+        <h1 className="text-xl font-semibold sm:text-2xl">Iuran Bulanan</h1>
         <p className="text-sm text-muted-foreground">Rekap status pembayaran iuran per rumah</p>
       </div>
 

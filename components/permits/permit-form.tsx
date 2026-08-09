@@ -21,7 +21,7 @@ import {
 
 type AssetOption = { id: string; name: string };
 
-export function PermitForm() {
+export function PermitForm({ initialType }: { initialType?: CreatePermitInput["type"] }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [assets, setAssets] = useState<AssetOption[]>([]);
@@ -33,7 +33,14 @@ export function PermitForm() {
     formState: { errors },
   } = useForm<CreatePermitInput>({
     resolver: zodResolver(createPermitSchema),
-    defaultValues: { title: "", description: "", type: "LAINNYA", startDate: "", endDate: "", assetIds: [] },
+    defaultValues: {
+      title: "",
+      description: "",
+      type: initialType ?? "LAINNYA",
+      startDate: "",
+      endDate: "",
+      assetIds: [],
+    },
   });
 
   const type = watch("type");

@@ -12,7 +12,13 @@ export default withAuth(
     }
 
     if (pathname.startsWith("/admin") && role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      // Bendahara diizinkan membuka: Sinyal Darurat & Review Bukti Pembayaran
+      const bendaharaAllowed =
+        role === "BENDAHARA" &&
+        (pathname.startsWith("/admin/emergency") || pathname.startsWith("/admin/payment-proofs"));
+      if (!bendaharaAllowed) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
     }
 
     if (pathname.startsWith("/cash/transactions/new") && role !== "BENDAHARA") {

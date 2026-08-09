@@ -61,6 +61,11 @@ enum RsvpStatus {
   NOT_GOING
 }
 
+enum EmergencyStatus {
+  OPEN
+  RESOLVED
+}
+
 enum PermitStatus {
   PENDING
   APPROVED
@@ -98,6 +103,7 @@ model User {
   houseId            String?
   house              House?           @relation(fields: [houseId], references: [id])
   residencyStatus    ResidencyStatus?
+  emergencyPin       String?
   complaints         Complaint[]
   permits            Permit[]
   events             Event[]
@@ -106,8 +112,35 @@ model User {
   chatMessages       GroupChatMessage[]
   paymentProofs      PaymentProof[]
   reviewedProofs     PaymentProof[] @relation("ReviewedPaymentProof")
+  deviceTokens       DeviceToken[]
+  webPushSubscriptions WebPushSubscription[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  token     String   @unique
+  platform  String   @default("android")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model WebPushSubscription {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Notification {
@@ -304,10 +337,25 @@ model PaymentProof {
 }
 
 model Setting {
-  id             String  @id @default("singleton")
-  duesAmount     Int     @default(150000)
-  cashSheetUrl   String?
-  duesSheetUrl   String?
+  id                   String  @id @default("singleton")
+  duesAmount           Int     @default(150000)
+  cashSheetUrl         String?
+  duesSheetUrl         String?
+  emergencyNotifyPhone String?
+}
+
+model EmergencyAlert {
+  id          String            @id @default(cuid())
+  userId      String
+  userName    String
+  houseBlock  String
+  message     String?
+  status      EmergencyStatus   @default(OPEN)
+  resolvedBy  String?
+  createdAt   DateTime          @default(now())
+  resolvedAt  DateTime?
+
+  @@index([status, createdAt])
 }
 
 model GroupChatMessage {
@@ -320,4 +368,12 @@ model GroupChatMessage {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+model SuratEdaran {
+  id          String   @id @default(cuid())
+  title       String
+  filePath    String
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
 }

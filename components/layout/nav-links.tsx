@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/app/generated/prisma/client";
 import { mainNavItems, bendaharaNavItems, adminNavItems, type NavItem } from "@/components/layout/nav-items";
+import { Upload } from "lucide-react";
 
 function NavLink({
   item,
@@ -51,17 +52,42 @@ export function NavLinks({
 }) {
   const pathname = usePathname();
 
+  // Item aktif hanya jika path cocok persis atau berada di bawahnya.
+  // Pengecualian: "Uang Kas" (/cash) tidak ikut aktif saat di halaman "Pembayaran Kas".
+  function isActive(href: string): boolean {
+    if (pathname === href) return true;
+    if (!pathname.startsWith(href + "/")) return false;
+    if (href === "/cash" && pathname.startsWith("/cash/dues/proof-submit")) return false;
+    return true;
+  }
+
+  // "Pembayaran Kas": untuk bendahara/admin arahkan ke Review Bukti (bukan halaman warga)
+  const paymentNavItem: NavItem =
+    role === "ADMIN" || role === "BENDAHARA"
+      ? { href: "/admin/payment-proofs", label: "Pembayaran Kas", icon: Upload }
+      : { href: "/cash/dues/proof-submit", label: "Pembayaran Kas", icon: Upload };
+
   return (
     <>
-      {mainNavItems.map((item) => (
-        <NavLink
-          key={item.href}
-          item={item}
-          active={pathname.startsWith(item.href)}
-          badgeCount={badges?.[item.href]}
-          onNavigate={onNavigate}
-        />
-      ))}
+      {mainNavItems.map((item) => {
+        // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
+        if (
+          role === "WARGA" &&
+          (item.href === "/cash" || item.href === "/cash/dues/proof-submit")
+        ) {
+          return null;
+        }
+        const resolved = item.href === "/cash/dues/proof-submit" ? paymentNavItem : item;
+        return (
+          <NavLink
+            key={resolved.href}
+            item={resolved}
+            active={isActive(resolved.href)}
+            badgeCount={badges?.[resolved.href]}
+            onNavigate={onNavigate}
+          />
+        );
+      })}
 
       {(role === "ADMIN" || role === "BENDAHARA") && (
         <>
@@ -72,7 +98,7 @@ export function NavLinks({
             <NavLink
               key={item.href}
               item={item}
-              active={pathname.startsWith(item.href)}
+              active={isActive(item.href)}
               badgeCount={badges?.[item.href]}
               onNavigate={onNavigate}
             />
@@ -89,7 +115,7 @@ export function NavLinks({
             <NavLink
               key={item.href}
               item={item}
-              active={pathname.startsWith(item.href)}
+              active={isActive(item.href)}
               badgeCount={badges?.[item.href]}
               onNavigate={onNavigate}
             />

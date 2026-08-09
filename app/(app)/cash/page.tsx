@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Download, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,10 @@ function formatRupiah(value: number) {
 
 export default async function CashPage() {
   const session = await requireUser();
+  // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
+  if (session.user.role === "WARGA") {
+    redirect("/dashboard");
+  }
   const isBendahara = session.user.role === "BENDAHARA";
   const canRemind = isBendahara || session.user.role === "ADMIN";
 

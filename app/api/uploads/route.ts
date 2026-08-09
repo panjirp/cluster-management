@@ -3,13 +3,14 @@ import { randomUUID } from "crypto";
 import { saveUpload } from "@/lib/save-upload";
 import { requireUser, UnauthorizedError } from "@/lib/session";
 
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX_SIZE = 5 * 1024 * 1024;
 
 const EXT_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
+  "application/pdf": "pdf",
 };
 
 export async function POST(req: NextRequest) {

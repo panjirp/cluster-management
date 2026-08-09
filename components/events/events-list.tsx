@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/empty-state";
+import { EventsCalendar } from "@/components/events/events-calendar";
 import { useQueryState } from "@/lib/use-query-state";
 
 const ALL_TIME = "__all__";
@@ -38,6 +39,7 @@ export type EventRow = {
 export function EventsList({ events, isAdmin }: { events: EventRow[]; isAdmin: boolean }) {
   const [time, setTime] = useQueryState("time", ALL_TIME);
   const [query, setQuery] = useQueryState("q", "");
+  const [selectedDate, setSelectedDate] = useQueryState("date", "");
 
   const filtered = useMemo(
     () =>
@@ -49,22 +51,33 @@ export function EventsList({ events, isAdmin }: { events: EventRow[]; isAdmin: b
           const haystack = `${e.title} ${e.description} ${e.location ?? ""}`.toLowerCase();
           if (!haystack.includes(q)) return false;
         }
+        if (selectedDate) {
+          const d = new Date(e.eventDate);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (key !== selectedDate) return false;
+        }
         return true;
       }),
-    [events, time, query]
+    [events, time, query, selectedDate]
   );
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <EventsCalendar
+        events={events}
+        selectedDate={selectedDate || null}
+        onSelectDate={(date) => setSelectedDate(date ?? "")}
+      />
+
+      <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Cari judul, deskripsi, atau lokasi…"
-          className="w-64"
+          className="sm:w-64"
         />
         <Select items={timeItems} value={time} onValueChange={(v) => v && setTime(v)}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="sm:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -99,7 +112,7 @@ export function EventsList({ events, isAdmin }: { events: EventRow[]; isAdmin: b
               <Card
                 className={`border-l-4 ${event.isPast ? "border-l-muted-foreground/30 opacity-70" : "border-l-blue-500"} transition-all group-hover:-translate-y-0.5 group-hover:shadow-md`}
               >
-                <CardContent className="flex items-center justify-between gap-4">
+                <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 space-y-1.5">
                     <p className="truncate text-base font-semibold group-hover:text-primary">{event.title}</p>
                     <p className="line-clamp-1 text-sm text-muted-foreground">{event.description}</p>
@@ -108,7 +121,7 @@ export function EventsList({ events, isAdmin }: { events: EventRow[]; isAdmin: b
                       {event.location ? ` · ${event.location}` : ""}
                     </p>
                   </div>
-                  <Badge variant="secondary">{event.goingCount} Akan Hadir</Badge>
+                  <Badge variant="secondary" className="w-fit shrink-0">{event.goingCount} Akan Hadir</Badge>
                 </CardContent>
               </Card>
             </Link>

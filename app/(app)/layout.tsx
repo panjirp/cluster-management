@@ -5,22 +5,29 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Navbar } from "@/components/layout/navbar";
 import { CopyrightFooter } from "@/components/layout/copyright-footer";
 import { GrassBackground } from "@/components/shared/grass-background";
+import { FcmPushRegister } from "@/components/shared/fcm-push-register";
+import { AssistantBot } from "@/components/shared/assistant-bot";
+import { WebPushRegister } from "@/components/pwa/web-push-register";
 
 async function getNavBadges(role: string): Promise<Record<string, number>> {
   if (role === "ADMIN") {
-    const [openComplaints, pendingPermits] = await Promise.all([
+    const [openComplaints, pendingPermits, openEmergency] = await Promise.all([
       prisma.complaint.count({ where: { status: { not: "RESOLVED" } } }),
       prisma.permit.count({ where: { status: "PENDING" } }),
+      prisma.emergencyAlert.count({ where: { status: "OPEN" } }),
     ]);
-    return { "/complaints": openComplaints, "/permits": pendingPermits };
+    return { "/complaints": openComplaints, "/permits": pendingPermits, "/admin/emergency": openEmergency };
   }
 
   if (role === "BENDAHARA") {
     const now = new Date();
-    const unpaidDues = await prisma.monthlyDue.count({
-      where: { year: now.getFullYear(), month: now.getMonth() + 1, isPaid: false },
-    });
-    return { "/cash": unpaidDues };
+    const [openEmergency, unpaidDues] = await Promise.all([
+      prisma.emergencyAlert.count({ where: { status: "OPEN" } }),
+      prisma.monthlyDue.count({
+        where: { year: now.getFullYear(), month: now.getMonth() + 1, isPaid: false },
+      }),
+    ]);
+    return { "/admin/emergency": openEmergency, "/cash": unpaidDues };
   }
 
   return {};
@@ -44,9 +51,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <GrassBackground />
+      <FcmPushRegister />
+      <AssistantBot />
       <div className="flex min-h-screen flex-1">
         <Sidebar role={session.user.role} badges={badges} />
-        <div className="flex flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col">
           <Navbar
             name={session.user.name ?? session.user.email ?? ""}
             role={session.user.role}
@@ -55,6 +64,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             unreadCount={unreadCount}
           />
           <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+          <div className="px-4 pb-4 sm:px-6">
+            <WebPushRegister />
+          </div>
           <CopyrightFooter />
         </div>
       </div>

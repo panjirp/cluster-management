@@ -1,13 +1,14 @@
 {
-  "name": "Barcelona Cove",
-  "short_name": "BC Cove",
+  "name": "Barcelona Cove Portal",
+  "short_name": "Barcelona Cove",
   "description": "Portal digital cluster perumahan Barcelona Cove",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b0b0b",
-  "theme_color": "#0b0b0b",
+  "background_color": "#6D0000",
+  "theme_color": "#6D0000",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

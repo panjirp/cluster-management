@@ -14,7 +14,13 @@ export const metadata: Metadata = {
 export default async function ProofSubmitPage() {
   const session = await requireUser();
 
-  if (session.user.role !== "WARGA") {
+  const role: string = session.user.role;
+  // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
+  if (role === "WARGA") {
+    redirect("/dashboard");
+  }
+  // Halaman ini khusus warga — pengurus diarahkan ke review bukti
+  if (role !== "WARGA") {
     redirect("/cash/dues");
   }
 

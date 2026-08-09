@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { requireBendahara, UnauthorizedError, ForbiddenError } from "@/lib/session";
 import { DuesReminderError, sendHouseDueReminder } from "@/lib/dues-reminder";
 import { WhatsAppNotConfiguredError } from "@/lib/whatsapp";
 
 const reminderSchema = z.object({
-  dueId: z.string().min(1),
+  houseId: z.string().min(1),
+  year: z.coerce.number().int().min(2000).max(2100),
+  month: z.coerce.number().int().min(1).max(12),
 });
 
 // POST /api/whatsapp/dues-reminder
 //
 // Mengirim pengingat iuran (kas) bulanan ke WhatsApp rumah via gateway Fonnte.
-// Hanya bendahara/admin. Body: { dueId }
+// Hanya bendahara/admin. Body: { houseId, year, month }
 export async function POST(req: NextRequest) {
   try {
     await requireBendahara();
@@ -20,18 +21,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const parsed = reminderSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "dueId wajib diisi." }, { status: 400 });
+      return NextResponse.json({ error: "houseId, year, dan month wajib diisi." }, { status: 400 });
     }
 
-    const due = await prisma.monthlyDue.findUnique({
-      where: { id: parsed.data.dueId },
-      select: { houseId: true, year: true, month: true },
-    });
-    if (!due) {
-      return NextResponse.json({ error: "Data iuran tidak ditemukan." }, { status: 404 });
-    }
-
-    await sendHouseDueReminder(due.houseId, due.year, due.month);
+    const { houseId, year, month } = parsed.data;
+    await sendHouseDueReminder(houseId, year, month);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -214,13 +214,13 @@ export function DuesGrid({
     setSelected(new Set());
   }
 
-  async function sendReminder(dueId: string) {
+  async function sendReminder(dueId: string, houseId: string, year: number, month: number) {
     setSendingId(dueId);
     try {
       const res = await fetch("/api/whatsapp/dues-reminder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dueId }),
+        body: JSON.stringify({ houseId, year, month }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -271,7 +271,7 @@ export function DuesGrid({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari nomor rumah atau nama pemilik…"
-            className="w-72"
+            className="w-full sm:w-64 lg:w-72"
           />
           <span className="text-xs text-muted-foreground">
             {filtered.length} dari {houses.length} rumah
@@ -291,12 +291,13 @@ export function DuesGrid({
         )}
       </div>
 
-      {/* Mobile: card list, no horizontal scroll needed */}
-      <div className="space-y-2 sm:hidden">
+      {/* Compact: card list otomatis untuk HP potrait & landscape (hingga 1023px),
+          grid 2 kolom saat landscape/tablet, tabel hanya di desktop (>=1024px) */}
+      <div className="grid grid-cols-1 gap-2 lg:hidden sm:grid-cols-2">
         {filtered.map((house) => (
-          <div key={house.id} className="space-y-2 rounded-lg border p-3">
+          <div key={house.id} className="space-y-1.5 rounded-lg border p-2.5">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 {canManage && house.due && !house.due.isPaid && (
                   <Checkbox
                     checked={selected.has(house.due.id)}
@@ -306,44 +307,46 @@ export function DuesGrid({
                 )}
                 <Link
                   href={`/cash/dues/house/${house.id}?year=${year}&month=${month}`}
-                  className="font-medium hover:text-primary hover:underline"
+                  className="truncate font-medium hover:text-primary hover:underline"
                 >
                   {house.blockNumber}
                 </Link>
               </div>
-              <Badge variant="outline" className={statusBadgeClass(house)}>
+              <Badge variant="outline" className={`shrink-0 ${statusBadgeClass(house)}`}>
                 {statusBadgeText(house)}
               </Badge>
             </div>
             <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-muted-foreground">{house.ownerName ?? "-"}</span>
-              <span>{house.due ? formatRupiah(house.due.amount) : "-"}</span>
+              <span className="truncate text-muted-foreground">{house.ownerName ?? "-"}</span>
+              <span className="shrink-0 font-medium">{house.due ? formatRupiah(house.due.amount) : "-"}</span>
             </div>
             {canManage && (
-              <div className="flex flex-wrap justify-end gap-2 pt-1">
+              <div className="flex flex-wrap justify-end gap-1.5 pt-0.5">
                 {house.due &&
                   !house.due.isPaid &&
                   (house.contactPhone ? (
                     <Button
                       variant="outline"
                       size="sm"
+                      className="h-7 text-xs"
                       disabled={sendingId === house.due.id}
-                      onClick={() => sendReminder(house.due!.id)}
+                      onClick={() => sendReminder(house.due!.id, house.id, year, month)}
                     >
-                      {sendingId === house.due.id ? "Mengirim..." : "Kirim Pengingat WA"}
+                      {sendingId === house.due.id ? "Mengirim..." : "Kirim WA"}
                     </Button>
                   ) : (
-                    <Button variant="outline" size="sm" disabled title="Nomor WA belum diisi">
-                      Kirim Pengingat WA
+                    <Button variant="outline" size="sm" className="h-7 text-xs" disabled title="Nomor WA belum diisi">
+                      Kirim WA
                     </Button>
                   ))}
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="h-7 text-xs"
                   disabled={pendingId === house.id}
                   onClick={() => togglePaid(house, !house.due?.isPaid)}
                 >
-                  {house.due?.isPaid ? "Tandai Belum Bayar" : "Tandai Lunas"}
+                  {house.due?.isPaid ? "Batal Lunas" : "Tandai Lunas"}
                 </Button>
               </div>
             )}
@@ -352,7 +355,7 @@ export function DuesGrid({
       </div>
 
       {/* Desktop: table */}
-      <div className="hidden overflow-x-auto rounded-lg border sm:block">
+      <div className="hidden overflow-x-auto rounded-lg border lg:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -411,7 +414,7 @@ export function DuesGrid({
                         variant="outline"
                         size="sm"
                         disabled={sendingId === house.due.id}
-                        onClick={() => sendReminder(house.due!.id)}
+                        onClick={() => sendReminder(house.due!.id, house.id, year, month)}
                       >
                         {sendingId === house.due.id ? "Mengirim..." : "Kirim Pengingat WA"}
                       </Button>

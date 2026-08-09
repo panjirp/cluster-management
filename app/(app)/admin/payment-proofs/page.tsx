@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import { ProofImagePreview } from "@/components/cash/proof-image-preview";
 
 const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   PENDING: { label: "Menunggu", variant: "outline" },
@@ -31,6 +32,57 @@ function formatRupiah(value: number) {
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date);
+}
+
+// Aksi per bukti (Setujui/Tolak | Lihat/Download | alasan penolakan)
+function ProofActions({ proof }: { proof: any }) {
+  if (proof.status === "PENDING") {
+    return (
+      <>
+        <form action={`/api/cash/payment-proofs/${proof.id}/review`} method="POST">
+          <input type="hidden" name="status" value="APPROVED" />
+          <Button type="submit" size="xs" className="bg-green-600 text-white hover:bg-green-700">
+            <CheckCircle className="mr-1 size-3" />
+            Setujui
+          </Button>
+        </form>
+        <form action={`/api/cash/payment-proofs/${proof.id}/review`} method="POST" className="flex items-center gap-1">
+          <input type="hidden" name="status" value="REJECTED" />
+          <input
+            type="text"
+            name="rejectionReason"
+            placeholder="Alasan penolakan"
+            className="h-7 w-36 rounded-md border border-input bg-background px-2 text-xs"
+            required
+          />
+          <Button type="submit" size="xs" variant="destructive" className="ml-1">
+            <XCircle className="mr-1 size-3" />
+            Tolak
+          </Button>
+        </form>
+      </>
+    );
+  }
+  if (proof.status === "APPROVED") {
+    return (
+      <>
+        <Button variant="outline" size="xs" render={<a href={proof.filePath} target="_blank" rel="noopener noreferrer">Lihat Bukti</a>}>
+          <FileText className="mr-1 size-3" />
+        </Button>
+        <Button variant="secondary" size="xs" render={<a href={proof.filePath} download={proof.fileName}>Download</a>}>
+          <Download className="mr-1 size-3" />
+        </Button>
+      </>
+    );
+  }
+  if (proof.rejectionReason) {
+    return (
+      <span className="text-xs text-destructive" title={proof.rejectionReason}>
+        {proof.rejectionReason.length > 30 ? proof.rejectionReason.slice(0, 30) + "…" : proof.rejectionReason}
+      </span>
+    );
+  }
+  return <span className="text-xs text-muted-foreground">—</span>;
 }
 
 export const metadata: Metadata = {
@@ -129,107 +181,101 @@ export default async function PaymentProofsPage() {
               Belum ada bukti pembayaran yang diajukan.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Rumah</TableHead>
-                  <TableHead>Pengaju</TableHead>
-                  <TableHead>Bulan Iuran</TableHead>
-                  <TableHead>Nominal</TableHead>
-                  <TableHead>File</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tanggal Submit</TableHead>
-                  <TableHead>Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Compact: kartu untuk HP potrait & landscape (hingga 1023px) */}
+              <div className="grid grid-cols-1 gap-2 lg:hidden sm:grid-cols-2">
                 {proofs.map((proof) => {
                   const { monthlyDue } = proof;
                   const monthLabel = monthlyDue
                     ? `${MONTH_LABELS[monthlyDue.month - 1]} ${monthlyDue.year}`
                     : "—";
-
                   return (
-                    <TableRow key={proof.id}>
-                      <TableCell className="font-medium">
-                        {monthlyDue?.house?.blockNumber ?? "—"}
-                      </TableCell>
-                      <TableCell>{proof.submittedBy?.name ?? "—"}</TableCell>
-                      <TableCell>{monthLabel}</TableCell>
-                      <TableCell>
-                        {monthlyDue ? formatRupiah(monthlyDue.amount) : "—"}
-                      </TableCell>
-                      <TableCell className="max-w-[180px] truncate text-sm" title={proof.fileName}>
-                        {proof.fileName}
-                      </TableCell>
-                      <TableCell>
+                    <div key={proof.id} className="space-y-2 rounded-lg border p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium">
+                          {monthlyDue?.house?.blockNumber ?? "—"}
+                        </span>
                         <Badge variant={STATUS_LABELS[proof.status]?.variant ?? "outline"}>
                           {STATUS_LABELS[proof.status]?.label ?? proof.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(proof.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        {proof.status === "PENDING" ? (
-                          <div className="flex flex-wrap gap-2">
-                            {/* Approve form */}
-                            <form action={`/api/cash/payment-proofs/${proof.id}/review`} method="POST">
-                              <input type="hidden" name="status" value="APPROVED" />
-                              <Button
-                                type="submit"
-                                size="xs"
-                                className="bg-green-600 text-white hover:bg-green-700"
-                              >
-                                <CheckCircle className="mr-1 size-3" />
-                                Setujui
-                              </Button>
-                            </form>
-                            {/* Reject form */}
-                            <form action={`/api/cash/payment-proofs/${proof.id}/review`} method="POST">
-                              <input type="hidden" name="status" value="REJECTED" />
-                              <input
-                                type="text"
-                                name="rejectionReason"
-                                placeholder="Alasan penolakan"
-                                className="h-7 w-36 rounded-md border border-input bg-background px-2 text-xs"
-                                required
-                              />
-                              <Button
-                                type="submit"
-                                size="xs"
-                                variant="destructive"
-                                className="ml-1"
-                              >
-                                <XCircle className="mr-1 size-3" />
-                                Tolak
-                              </Button>
-                            </form>
-                          </div>
-                        ) : proof.status === "APPROVED" ? (
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="xs" render={<a href={proof.filePath} target="_blank" rel="noopener noreferrer">Lihat Bukti</a>}>
-                              <FileText className="mr-1 size-3" />
-                            </Button>
-                            <Button variant="secondary" size="xs" render={<a href={proof.filePath} download={proof.fileName}>Download</a>}>
-                              <Download className="mr-1 size-3" />
-                            </Button>
-                          </div>
-                        ) : proof.rejectionReason ? (
-                          <span className="text-xs text-destructive" title={proof.rejectionReason}>
-                            {proof.rejectionReason.length > 30
-                              ? proof.rejectionReason.slice(0, 30) + "…"
-                              : proof.rejectionReason}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                        <span className="text-muted-foreground">Pengaju</span>
+                        <span className="truncate font-medium">{proof.submittedBy?.name ?? "—"}</span>
+                        <span className="text-muted-foreground">Bulan Iuran</span>
+                        <span>{monthLabel}</span>
+                        <span className="text-muted-foreground">Nominal</span>
+                        <span className="font-medium">{monthlyDue ? formatRupiah(monthlyDue.amount) : "—"}</span>
+                        <span className="text-muted-foreground">Diajukan</span>
+                        <span>{formatDate(proof.createdAt)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ProofImagePreview filePath={proof.filePath} fileName={proof.fileName} />
+                        <span className="truncate text-xs text-muted-foreground">{proof.fileName}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <ProofActions proof={proof} />
+                      </div>
+                    </div>
                   );
                 })}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop: tabel */}
+              <div className="hidden overflow-x-auto rounded-lg border lg:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Rumah</TableHead>
+                      <TableHead>Pengaju</TableHead>
+                      <TableHead>Bulan Iuran</TableHead>
+                      <TableHead>Nominal</TableHead>
+                      <TableHead>File</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Tanggal Submit</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {proofs.map((proof) => {
+                      const { monthlyDue } = proof;
+                      const monthLabel = monthlyDue
+                        ? `${MONTH_LABELS[monthlyDue.month - 1]} ${monthlyDue.year}`
+                        : "—";
+
+                      return (
+                        <TableRow key={proof.id}>
+                          <TableCell className="font-medium">
+                            {monthlyDue?.house?.blockNumber ?? "—"}
+                          </TableCell>
+                          <TableCell>{proof.submittedBy?.name ?? "—"}</TableCell>
+                          <TableCell>{monthLabel}</TableCell>
+                          <TableCell>
+                            {monthlyDue ? formatRupiah(monthlyDue.amount) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <ProofImagePreview filePath={proof.filePath} fileName={proof.fileName} />
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={STATUS_LABELS[proof.status]?.variant ?? "outline"}>
+                              {STATUS_LABELS[proof.status]?.label ?? proof.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(proof.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-2">
+                              <ProofActions proof={proof} />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

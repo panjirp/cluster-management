@@ -223,8 +223,9 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
         </div>
       ) : (
         <>
-          {/* Mobile: card list, no horizontal scroll needed */}
-          <div className="space-y-2 sm:hidden">
+          {/* Compact: card list otomatis untuk HP potrait & landscape (hingga 1023px),
+              grid 2 kolom saat landscape/tablet, tabel hanya di desktop (>=1024px) */}
+          <div className="grid grid-cols-1 gap-2 lg:hidden sm:grid-cols-2">
             {paginated.map((tx) => (
               <div key={tx.id} className="space-y-1.5 rounded-lg border p-3">
                 <div className="flex items-center justify-between gap-2">
@@ -271,7 +272,7 @@ export function TransactionsTable({ transactions, isBendahara }: { transactions:
           </div>
 
           {/* Desktop: table */}
-          <div className="hidden overflow-x-auto rounded-lg border sm:block">
+          <div className="hidden overflow-x-auto rounded-lg border lg:block">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -21,6 +21,13 @@ export const metadata: Metadata = {
   title: { default: "Barcelona Cove", template: "%s — Barcelona Cove" },
   description: "Portal warga cluster Barcelona Cove",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon-180.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {

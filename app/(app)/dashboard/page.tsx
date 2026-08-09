@@ -215,6 +215,8 @@ export default async function DashboardPage() {
   const { role, id: userId } = session.user;
 
   if (role === "WARGA") {
+    // Fitur kas/iuran: nonaktif sementara untuk warga (aktif kembali jika diminta)
+    const duesEnabled = false;
     const now = new Date();
     const [openComplaints, pendingPermits, due, upcomingEvents] = await Promise.all([
       prisma.complaint.count({ where: { createdById: userId, status: { not: "RESOLVED" } } }),
@@ -253,16 +255,18 @@ export default async function DashboardPage() {
             icon={FileCheck2}
             accent="blue"
           />
-          <StatCard
-            href="/cash/dues"
-            title="Iuran Bulan Ini"
-            value={due ? (due.isPaid ? "Lunas" : "Belum Bayar") : "Belum Dibuat"}
-            icon={Wallet}
-            accent="green"
-          />
+          {duesEnabled && (
+            <StatCard
+              href="/cash/dues"
+              title="Iuran Bulan Ini"
+              value={due ? (due.isPaid ? "Lunas" : "Belum Bayar") : "Belum Dibuat"}
+              icon={Wallet}
+              accent="green"
+            />
+          )}
         </div>
 
-        {session.user.houseId && due?.isPaid && (
+        {duesEnabled && session.user.houseId && due?.isPaid && (
           <Card>
             <CardContent className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">

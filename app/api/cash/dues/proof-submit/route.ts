@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, UnauthorizedError } from "@/lib/session";
+import { sendPushToUsers } from "@/lib/web-push";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     // Verify MonthlyDue exists and belongs to user's house (WARGA can only submit for their own house)
     const due = await prisma.monthlyDue.findUnique({
       where: { id: monthlyDueId },
-      include: { house: { select: { id: true } } },
+      include: { house: { select: { id: true, blockNumber: true } } },
     });
     if (!due) {
       return NextResponse.json({ error: "Data iuran tidak ditemukan." }, { status: 404 });
@@ -82,11 +83,38 @@ export async function POST(req: NextRequest) {
     await writeFile(filePath, Buffer.from(bytes));
 
     // Update PaymentProof record with filePath
-    const publicPath = `/uploads/payment-proofs/${filename}`;
+    // Catatan: pakai /api/uploads/... (route handler dinamis), bukan /uploads/...
+    // karena `next start` hanya men-serve folder public yang eksis saat build.
+    const publicPath = `/api/uploads/payment-proofs/${filename}`;
     await prisma.paymentProof.update({
       where: { id: proof.id },
       data: { filePath: publicPath },
     });
+
+    // Notifikasi pembayaran → semua admin & bendahara (muncul sebagai push saat app dibuka)
+    const pengurus = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "BENDAHARA"] } },
+      select: { id: true },
+    });
+    if (pengurus.length > 0) {
+      await prisma.notification.createMany({
+        data: pengurus.map((p) => ({
+          userId: p.id,
+          title: "🧾 Bukti Pembayaran Baru",
+          body: `Warga blok ${due.house.blockNumber} (${session.user.name ?? "warga"}) mengajukan bukti pembayaran iuran — menunggu review.`,
+          url: "/admin/payment-proofs",
+        })),
+      });
+      // Push: FCM (Android native) + Web Push (PWA iOS/Android/desktop) ke pengurus
+      await sendPushToUsers(
+        pengurus.map((p) => p.id),
+        {
+          title: "🧾 Bukti Pembayaran Baru",
+          body: `Warga blok ${due.house.blockNumber} (${session.user.name ?? "warga"}) mengajukan bukti pembayaran iuran — menunggu review.`,
+          url: "/admin/payment-proofs",
+        }
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ id: proof.id, status: "PENDING", filePath: publicPath }, { status: 201 });
   } catch (error) {

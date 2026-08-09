@@ -129,6 +129,13 @@ export function NotificationBell({
             </DropdownMenuItem>
           ))
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => router.push("/notifications")}
+          className="justify-center py-2 text-sm font-medium text-primary"
+        >
+          Lihat Semua Notifikasi
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
