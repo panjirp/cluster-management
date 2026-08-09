@@ -51,6 +51,7 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/residents", label: "Data Warga", icon: Users },
   { href: "/admin/emergency", label: "Sinyal Darurat", icon: Siren },
   { href: "/admin/notifications", label: "Kirim Pengumuman", icon: Megaphone },
+  { href: "/admin/letters", label: "Surat Edaran", icon: FileText },
   { href: "/admin/map-editor", label: "Editor Posisi Peta", icon: MapPin },
   { href: "/admin/activity-log", label: "Log Aktivitas", icon: History },
   { href: "/admin/payment-proofs", label: "Review Bukti", icon: FileCheck2 },
