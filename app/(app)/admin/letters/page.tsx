@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { requireBendahara } from "@/lib/session";
+import { requireAdmin } from "@/lib/session";
 import { LetterForm } from "@/components/admin/letter-form";
 import { LettersAdminList } from "@/components/admin/letters-admin-list";
 
 export const metadata: Metadata = { title: "Surat Edaran" };
 
 export default async function AdminLettersPage() {
-  await requireBendahara();
+  await requireAdmin();
 
   const letters = await prisma.suratEdaran.findMany({
     orderBy: { publishedAt: "desc" },

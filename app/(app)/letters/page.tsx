@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { FileText, ExternalLink } from "lucide-react";
+import { FileText, ExternalLink, ImageIcon } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ export const metadata: Metadata = { title: "Surat Edaran" };
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(date);
+}
+
+function isImage(path: string) {
+  return /\.(jpe?g|png|webp)$/i.test(path);
 }
 
 export default async function LettersPage() {
@@ -42,7 +46,11 @@ export default async function LettersPage() {
               <CardContent className="flex items-center justify-between gap-3 py-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 ring-1 ring-inset ring-primary/20">
-                    <FileText className="size-5 text-primary" />
+                    {isImage(letter.filePath) ? (
+                      <ImageIcon className="size-5 text-primary" />
+                    ) : (
+                      <FileText className="size-5 text-primary" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{letter.title}</p>
@@ -56,11 +64,20 @@ export default async function LettersPage() {
                   render={
                     <a href={letter.filePath} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="size-4" />
-                      Buka PDF
+                      {isImage(letter.filePath) ? "Lihat" : "Buka PDF"}
                     </a>
                   }
                 />
               </CardContent>
+              {isImage(letter.filePath) && (
+                <a href={letter.filePath} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={letter.filePath}
+                    alt={letter.title}
+                    className="max-h-56 w-full border-t object-contain bg-black/5"
+                  />
+                </a>
+              )}
             </Card>
           ))}
         </div>

@@ -3,16 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FileUpload } from "@/components/shared/file-upload";
 
 export function LetterForm() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [filePath, setFilePath] = useState("");
+  const [notifyWarga, setNotifyWarga] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -31,16 +33,17 @@ export function LetterForm() {
       const res = await fetch("/api/letters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), filePath }),
+        body: JSON.stringify({ title: title.trim(), filePath, notifyWarga }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
         toast.error(typeof body?.error === "string" ? body.error : "Gagal menyimpan surat.");
         return;
       }
-      toast.success("Surat edaran diterbitkan.");
+      toast.success(notifyWarga ? "Surat diterbitkan & notifikasi terkirim ke semua warga." : "Surat edaran diterbitkan.");
       setTitle("");
       setFilePath("");
+      setNotifyWarga(false);
       router.refresh();
     } catch {
       toast.error("Gagal menyimpan surat.");
@@ -62,9 +65,33 @@ export function LetterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label>File Surat (PDF)</Label>
-        <FileUpload id="letter-file" label="Unggah file PDF" value={filePath} onChange={setFilePath} />
+        <Label>File Surat (PDF atau Gambar)</Label>
+        <FileUpload id="letter-file" label="Unggah file PDF / gambar (JPG, PNG, WEBP)" value={filePath} onChange={setFilePath} />
+        {filePath && /\.(jpe?g|png|webp)$/i.test(filePath) && (
+          <img
+            src={filePath}
+            alt="Pratinjau surat"
+            className="mt-2 max-h-48 w-auto rounded-lg border object-contain"
+          />
+        )}
       </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-lg border bg-muted/40 p-3">
+        <Checkbox
+          checked={notifyWarga}
+          onCheckedChange={(v) => setNotifyWarga(v === true)}
+          className="mt-0.5"
+        />
+        <span className="text-sm">
+          <span className="flex items-center gap-1.5 font-medium">
+            <Megaphone className="size-4 text-primary" />
+            Kirim notifikasi ke semua warga
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Warga akan dapat notifikasi + push di HP bahwa surat edaran baru terbit
+          </span>
+        </span>
+      </label>
 
       <Button type="submit" disabled={submitting || !title.trim() || !filePath}>
         {submitting ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}

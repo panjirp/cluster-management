@@ -91,7 +91,7 @@ export function FileUpload({
           )}
         </div>
       ) : (
-        <Input id={id} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} disabled={uploading} />
+        <Input id={id} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={uploading} />
       )}
     </div>
   );
