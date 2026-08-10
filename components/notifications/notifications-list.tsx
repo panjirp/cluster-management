@@ -127,7 +127,7 @@ export function NotificationsList({
                       <p className={`text-sm font-semibold ${n.read ? "text-muted-foreground" : ""}`}>{n.title}</p>
                       {!n.read && <Badge className="text-[10px]">Baru</Badge>}
                     </div>
-                    <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{n.body}</p>
+                    <p className="mt-0.5 whitespace-pre-line break-words text-sm text-muted-foreground">{n.body}</p>
                     <p className="mt-1 text-xs text-muted-foreground/70">{timeAgo(n.createdAt)}</p>
                   </div>
                   {n.url && <ArrowUpRight className="mt-1 size-4 shrink-0 text-muted-foreground/50" />}
