@@ -62,23 +62,21 @@ function StatCard({
 }) {
   return (
     <Link href={href} className="group block h-full">
-      <Card className="relative h-full overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-[0_12px_40px_-16px_color-mix(in_oklab,var(--primary)_45%,transparent)]">
-        <div className="pointer-events-none absolute -top-10 -right-10 size-28 rounded-full bg-primary/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
-        <CardContent className="flex h-full flex-col gap-5">
-          <div className="flex items-start justify-between">
-            <div
-              className={`grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-inset ring-foreground/10 ${chipStyles[accent]}`}
-            >
-              <Icon className="size-5" />
-            </div>
-            <ArrowUpRight className="size-4 text-muted-foreground/40 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+      <Card className="relative h-full overflow-hidden transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-[0_8px_28px_-16px_color-mix(in_oklab,var(--primary)_45%,transparent)]">
+        <div className="pointer-events-none absolute -top-8 -right-8 size-20 rounded-full bg-primary/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
+        <CardContent className="flex items-center gap-3 px-3.5 py-3">
+          <div
+            className={`grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset ring-foreground/10 ${chipStyles[accent]}`}
+          >
+            <Icon className="size-4" />
           </div>
-          <div className="mt-auto">
-            <p className="truncate text-3xl font-bold tracking-tight tabular-nums transition-colors group-hover:text-primary">
+          <div className="min-w-0">
+            <p className="truncate text-lg font-bold leading-tight tracking-tight tabular-nums transition-colors group-hover:text-primary">
               {value}
             </p>
-            <p className="mt-1 truncate text-sm text-muted-foreground">{title}</p>
+            <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">{title}</p>
           </div>
+          <ArrowUpRight className="ml-auto size-3.5 shrink-0 text-muted-foreground/40 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
         </CardContent>
       </Card>
     </Link>
@@ -242,7 +240,7 @@ export default async function DashboardPage() {
         <WeatherWidget />
         <UpcomingEventsSection events={upcomingEvents} />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
             href="/complaints"
             title="Pengaduan Aktif"
@@ -343,7 +341,7 @@ export default async function DashboardPage() {
         <WeatherWidget />
         <UpcomingEventsSection events={upcomingEvents} />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
             href="/complaints"
             title="Pengaduan Perlu Ditindak"
@@ -419,7 +417,7 @@ export default async function DashboardPage() {
       <WeatherWidget />
       <UpcomingEventsSection events={upcomingEvents} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard
           href="/cash"
           title="Saldo Kas Saat Ini"
