@@ -2,8 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Bell, BellOff, CheckCheck, ArrowUpRight } from "lucide-react";
+import { Bell, BellOff, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -130,21 +129,12 @@ export function NotificationsList({
                     <p className="mt-0.5 whitespace-pre-line break-words text-sm text-muted-foreground">{n.body}</p>
                     <p className="mt-1 text-xs text-muted-foreground/70">{timeAgo(n.createdAt)}</p>
                   </div>
-                  {n.url && <ArrowUpRight className="mt-1 size-4 shrink-0 text-muted-foreground/50" />}
                 </CardContent>
               </Card>
             );
 
-            return n.url ? (
-              <Link
-                key={n.id}
-                href={n.url}
-                className="block"
-                onClick={() => markRead(n)}
-              >
-                {content}
-              </Link>
-            ) : (
+            // Klik card hanya menandai dibaca — tidak redirect ke halaman lain.
+            return (
               <div key={n.id} onClick={() => markRead(n)} className="cursor-pointer">
                 {content}
               </div>

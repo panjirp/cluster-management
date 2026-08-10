@@ -179,19 +179,16 @@ export function NotificationBell({
                 </p>
               </CardContent>
               <CardFooter className="flex justify-end gap-2 pt-2">
-                {detail.url && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      const url = detail.url;
-                      setDetail(null);
-                      router.push(url ?? "/notifications");
-                    }}
-                  >
-                    Buka Detail
-                    <ArrowUpRight className="size-4" />
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setDetail(null);
+                    router.push("/notifications");
+                  }}
+                >
+                  Lihat Semua Notifikasi
+                  <ArrowUpRight className="size-4" />
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setDetail(null)}>
                   Tutup
                 </Button>
