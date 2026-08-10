@@ -10,7 +10,14 @@ export async function GET() {
       take: 100,
       orderBy: { createdAt: "asc" },
       include: {
-        author: { select: { id: true, name: true, role: true } },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            house: { select: { blockNumber: true } },
+          },
+        },
         house: { select: { id: true, blockNumber: true } },
       },
     });
@@ -50,7 +57,14 @@ export async function POST(req: NextRequest) {
         houseId: houseId || null,
       },
       include: {
-        author: { select: { id: true, name: true, role: true } },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            house: { select: { blockNumber: true } },
+          },
+        },
         house: { select: { id: true, blockNumber: true } },
       },
     });

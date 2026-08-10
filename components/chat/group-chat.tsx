@@ -8,7 +8,12 @@ type ChatMessage = {
   createdAt: string;
   houseId: string | null;
   house: { id: string; blockNumber: string } | null;
-  author: { id: string; name: string; role: string };
+  author: {
+    id: string;
+    name: string;
+    role: string;
+    house: { blockNumber: string } | null;
+  };
 };
 
 type HouseOption = {
@@ -16,11 +21,22 @@ type HouseOption = {
   blockNumber: string;
 };
 
-function formatTime(dateString: string) {
-  return new Intl.DateTimeFormat("id-ID", {
+// Tanggal & jam pesan: "14:32" (hari ini), "Kemarin 14:32", atau "9 Agu, 14:32".
+function formatDateTime(dateString: string) {
+  const date = new Date(dateString);
+  const time = new Intl.DateTimeFormat("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(dateString));
+  }).format(date);
+
+  const now = new Date();
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+
+  if (diffDays <= 0) return time;
+  if (diffDays === 1) return `Kemarin ${time}`;
+  const day = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(date);
+  return `${day}, ${time}`;
 }
 
 function roleLabel(role: string) {
@@ -182,16 +198,16 @@ export default function GroupChat() {
               <div className="min-w-0">
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-sm font-medium">{msg.author.name}</span>
-                  {msg.house && (
+                  {(msg.author.house || msg.house) && (
                     <span className="text-xs text-muted-foreground">
-                      • Blok {msg.house.blockNumber}
+                      • Blok {msg.author.house?.blockNumber ?? msg.house?.blockNumber}
                     </span>
                   )}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${roleColor(msg.author.role)}`}>
                     {roleLabel(msg.author.role)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    {formatTime(msg.createdAt)}
+                    {formatDateTime(msg.createdAt)}
                   </span>
                 </div>
                 <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words mt-0.5">
