@@ -29,29 +29,74 @@ const WMO_LABELS: Record<number, { label: string; icon: string }> = {
   99: { label: "Badai Petir & Hujan Es Lebat", icon: "cloud-lightning" },
 };
 
-// GET /api/weather — cuaca terkini untuk dashboard warga (Open-Meteo, gratis tanpa key)
+// Klasifikasi US AQI (standar EPA)
+export function aqiCategory(aqi: number): { label: string; level: "good" | "moderate" | "unhealthy-sensitive" | "unhealthy" | "very-unhealthy" | "hazardous" } {
+  if (aqi <= 50) return { label: "Baik", level: "good" };
+  if (aqi <= 100) return { label: "Sedang", level: "moderate" };
+  if (aqi <= 150) return { label: "Tidak Sehat (Sensitif)", level: "unhealthy-sensitive" };
+  if (aqi <= 200) return { label: "Tidak Sehat", level: "unhealthy" };
+  if (aqi <= 300) return { label: "Sangat Tidak Sehat", level: "very-unhealthy" };
+  return { label: "Berbahaya", level: "hazardous" };
+}
+
+// Klasifikasi indeks UV (standar WHO)
+export function uvCategory(uv: number): { label: string; level: "low" | "moderate" | "high" | "very-high" | "extreme" } {
+  if (uv < 3) return { label: "Rendah", level: "low" };
+  if (uv < 6) return { label: "Sedang", level: "moderate" };
+  if (uv < 8) return { label: "Tinggi", level: "high" };
+  if (uv < 11) return { label: "Sangat Tinggi", level: "very-high" };
+  return { label: "Ekstrem", level: "extreme" };
+}
+
+type AirQualityResponse = {
+  current?: { us_aqi?: number; pm2_5?: number; uv_index?: number };
+};
+
+type ForecastResponse = {
+  current: { temperature_2m: number; relative_humidity_2m: number; apparent_temperature: number; weather_code: number; wind_speed_10m: number };
+  daily: { precipitation_probability_max: number[]; temperature_2m_max: number[]; temperature_2m_min: number[]; uv_index_max: number[] };
+};
+
+// GET /api/weather — cuaca + kualitas udara + UV untuk dashboard warga (Open-Meteo, gratis tanpa key)
 export async function GET() {
   if (cache && Date.now() - cache.at < CACHE_MS) {
     return NextResponse.json(cache.data);
   }
 
   try {
-    const url =
+    const forecastUrl =
       `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
       `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m` +
-      `&daily=precipitation_probability_max,temperature_2m_max,temperature_2m_min` +
+      `&daily=precipitation_probability_max,temperature_2m_max,temperature_2m_min,uv_index_max` +
       `&timezone=Asia%2FJakarta&forecast_days=1`;
 
-    const res = await fetch(url, { next: { revalidate: 0 } });
+    const airUrl =
+      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}` +
+      `&current=us_aqi,pm2_5`;
+
+    // Ambil keduanya paralel; kualitas udara boleh gagal tanpa mematikan cuaca.
+    const [res, airRes] = await Promise.all([
+      fetch(forecastUrl),
+      fetch(airUrl).catch(() => null),
+    ]);
+
     if (!res.ok) {
       return NextResponse.json({ error: "Gagal mengambil data cuaca." }, { status: 502 });
     }
-    const raw = (await res.json()) as {
-      current: { temperature_2m: number; relative_humidity_2m: number; apparent_temperature: number; weather_code: number; wind_speed_10m: number };
-      daily: { precipitation_probability_max: number[]; temperature_2m_max: number[]; temperature_2m_min: number[] };
-    };
+    const raw = (await res.json()) as ForecastResponse;
 
     const wmo = WMO_LABELS[raw.current.weather_code] ?? { label: "Tidak Diketahui", icon: "cloud" };
+
+    // Kualitas udara (opsional — null jika endpoint gagal)
+    let aqi: number | null = null;
+    let pm25: number | null = null;
+    if (airRes && airRes.ok) {
+      const air = (await airRes.json().catch(() => null)) as AirQualityResponse | null;
+      if (air?.current) {
+        aqi = air.current.us_aqi ?? null;
+        pm25 = air.current.pm2_5 ?? null;
+      }
+    }
 
     const data = {
       temperature: raw.current.temperature_2m,
@@ -63,6 +108,9 @@ export async function GET() {
       rainProbability: raw.daily.precipitation_probability_max?.[0] ?? null,
       tempMax: raw.daily.temperature_2m_max?.[0] ?? null,
       tempMin: raw.daily.temperature_2m_min?.[0] ?? null,
+      uvIndex: raw.daily.uv_index_max?.[0] ?? null,
+      aqi,
+      pm25,
       updatedAt: new Date().toISOString(),
     };
 
