@@ -92,6 +92,24 @@ function getHealthAdvice(d: WeatherData, hour: number): Advice {
     };
   }
 
+  // Sore (16–19): panas sudah reda, cuaca aman & udara baik -> ajakan keluar & olahraga.
+  if (
+    hour >= 16 &&
+    hour < 19 &&
+    isClear &&
+    rain < 40 &&
+    !badAir &&
+    !veryHighUv &&
+    d.feelsLike < 31
+  ) {
+    return {
+      tone: "positive",
+      title: "Sore sudah teduh — ayo gerak sebentar",
+      text:
+        "Matahari sudah tidak terik. Waktu yang enak untuk keluar rumah, jalan santai, atau berolahraga ringan di sekitar cluster.",
+    };
+  }
+
   // Kondisi buruk: udara tidak sehat dan/atau UV sangat tinggi.
   if (badAir || veryHighUv) {
     const isEvening = hour >= 15;
@@ -127,10 +145,16 @@ const MOCKS: Record<string, WeatherData> = {
     rainProbability: 5, tempMax: 32, tempMin: 25,
     uvIndex: 4.2, uvNow: 1.2, aqi: 42, pm25: 12,
   },
+  evening: {
+    temperature: 29, feelsLike: 30, humidity: 70, windSpeed: 5,
+    condition: "Cerah Berawan", icon: "cloud-sun",
+    rainProbability: 10, tempMax: 34, tempMin: 25,
+    uvIndex: 8.2, uvNow: 0.6, aqi: 58, pm25: 16,
+  },
 };
 
 /** Widget cuaca + kualitas udara cluster (Open-Meteo via /api/weather) — tampil di dashboard. */
-export function WeatherWidget({ mock, forceHour }: { mock?: "bad" | "uv" | "morning"; forceHour?: number } = {}) {
+export function WeatherWidget({ mock, forceHour }: { mock?: "bad" | "uv" | "morning" | "evening"; forceHour?: number } = {}) {
   const [data, setData] = useState<WeatherData | null>(mock ? MOCKS[mock] : null);
   const [failed, setFailed] = useState(false);
 
