@@ -13,6 +13,43 @@ function formatEventDate(date: Date) {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeStyle: "short" }).format(date);
 }
 
+// Fallback LLM: DeepSeek via OpenCode Zen (gratis, server-side)
+async function askDeepSeek(question: string): Promise<string | null> {
+  const base = process.env.OPENCODE_ZEN_BASE_URL?.replace(/\/+$/, "");
+  const key = process.env.OPENCODE_ZEN_API_KEY;
+  if (!base || !key) return null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(`${base}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "deepseek-v4-flash-free",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Kamu adalah asisten portal warga Barcelona Cove (perumahan RT 003/RW 031). Jawab dalam bahasa Indonesia yang ramah, singkat (maks 4-5 kalimat), dan praktis. Boleh pakai emoji secukupnya. Jangan sebutkan bahwa kamu model AI/LLM. Jika ditanya hal di luar konteks warga/portal, jawab singkat dan sopan.",
+          },
+          { role: "user", content: question },
+        ],
+        max_tokens: 800,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const content: string | undefined = data?.choices?.[0]?.message?.content;
+    const reasoning: string | undefined = data?.choices?.[0]?.message?.reasoning_content;
+    const answer = (content ?? "").trim();
+    return answer.length > 0 ? answer : (reasoning ?? "").trim().slice(-600) || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     await requireUser();
@@ -130,7 +167,10 @@ export async function POST(req: NextRequest) {
     } else if (/(qr|kartu warga|identitas)/.test(q)) {
       reply = "Kartu Warga Digital (QR) ada di **Profil → Lihat Kartu Warga (QR)**. Tunjukkan ke satpam saat diminta.";
     } else {
+      // Pertanyaan umum → jawab dengan DeepSeek (gratis via OpenCode Zen)
+      const aiAnswer = await askDeepSeek(message.trim());
       reply =
+        aiAnswer ??
         "Halo! 👋 Aku asisten portal Barcelona Cove. Aku bisa bantu soal:\n• Jadwal & kontak satpam\n• Cara lapor pengaduan / izin\n• Acara terdekat & pinjam fasilitas\n• Notifikasi, akun, surat edaran, dan lainnya\n\nCoba ketik salah satu topik di atas, atau pilih pertanyaan cepat di bawah.";
     }
 
