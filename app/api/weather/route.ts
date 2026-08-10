@@ -72,7 +72,7 @@ export async function GET() {
 
     const airUrl =
       `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}` +
-      `&current=us_aqi,pm2_5`;
+      `&current=us_aqi,pm2_5,uv_index`;
 
     // Ambil keduanya paralel; kualitas udara boleh gagal tanpa mematikan cuaca.
     const [res, airRes] = await Promise.all([
@@ -90,11 +90,13 @@ export async function GET() {
     // Kualitas udara (opsional — null jika endpoint gagal)
     let aqi: number | null = null;
     let pm25: number | null = null;
+    let uvNow: number | null = null;
     if (airRes && airRes.ok) {
       const air = (await airRes.json().catch(() => null)) as AirQualityResponse | null;
       if (air?.current) {
         aqi = air.current.us_aqi ?? null;
         pm25 = air.current.pm2_5 ?? null;
+        uvNow = air.current.uv_index ?? null;
       }
     }
 
@@ -109,6 +111,7 @@ export async function GET() {
       tempMax: raw.daily.temperature_2m_max?.[0] ?? null,
       tempMin: raw.daily.temperature_2m_min?.[0] ?? null,
       uvIndex: raw.daily.uv_index_max?.[0] ?? null,
+      uvNow,
       aqi,
       pm25,
       updatedAt: new Date().toISOString(),

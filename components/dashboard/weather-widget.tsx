@@ -11,6 +11,8 @@ import {
   CloudSun,
   Droplets,
   Factory,
+  HeartPulse,
+  ShieldAlert,
   Sun,
   Thermometer,
   Umbrella,
@@ -29,6 +31,7 @@ type WeatherData = {
   tempMax: number | null;
   tempMin: number | null;
   uvIndex: number | null;
+  uvNow: number | null;
   aqi: number | null;
   pm25: number | null;
 };
@@ -63,12 +66,76 @@ function uvInfo(uv: number): { label: string; cls: string } {
   return { label: "Ekstrem", cls: "text-purple-600 dark:text-purple-400" };
 }
 
+type Advice = { tone: "warning" | "positive"; title: string; text: string } | null;
+
+/**
+ * Himbauan kesehatan berdasarkan kualitas udara, UV, cuaca, dan jam lokal.
+ * - Udara buruk / UV sangat tinggi  -> pakai masker, kurangi aktivitas luar (apalagi sore).
+ * - Pagi cerah & udara bersih       -> ajakan keluar rumah & berolahraga.
+ */
+function getHealthAdvice(d: WeatherData, hour: number): Advice {
+  const aqi = d.aqi;
+  const uv = d.uvNow ?? d.uvIndex;
+  const isClear = d.icon === "sun" || d.icon === "cloud-sun";
+  const rain = d.rainProbability ?? 0;
+
+  const badAir = aqi != null && aqi > 100;
+  const veryHighUv = uv != null && uv >= 8;
+
+  // Pagi cerah (05–09): ajakan positif untuk keluar & olahraga.
+  if (hour >= 5 && hour < 9 && isClear && rain < 40 && !badAir && !veryHighUv) {
+    return {
+      tone: "positive",
+      title: "Pagi cerah — waktu yang pas untuk bergerak",
+      text:
+        "Udara pagi ini nyaman untuk keluar rumah dan berolahraga ringan. Jangan lupa tetap cukupi cairan tubuh.",
+    };
+  }
+
+  // Kondisi buruk: udara tidak sehat dan/atau UV sangat tinggi.
+  if (badAir || veryHighUv) {
+    const isEvening = hour >= 15;
+    const causes: string[] = [];
+    if (badAir) causes.push("kualitas udara sedang tidak sehat");
+    if (veryHighUv) causes.push("indeks UV sangat tinggi");
+    const tail = isEvening
+      ? "Sebaiknya gunakan masker dan kurangi aktivitas di luar rumah, terutama pada sore hari."
+      : "Sebaiknya gunakan masker dan kurangi aktivitas di luar rumah.";
+    return { tone: "warning", title: "Peringatan kesehatan", text: `${causes.join(" dan ")}. ${tail}` };
+  }
+
+  return null;
+}
+
+// Data mock untuk preview (tidak dipakai di produksi).
+const MOCKS: Record<string, WeatherData> = {
+  bad: {
+    temperature: 31, feelsLike: 35, humidity: 72, windSpeed: 6,
+    condition: "Berawan Sebagian", icon: "cloud-sun",
+    rainProbability: 10, tempMax: 33, tempMin: 26,
+    uvIndex: 9.2, uvNow: 8.6, aqi: 185, pm25: 88,
+  },
+  uv: {
+    temperature: 32, feelsLike: 36, humidity: 60, windSpeed: 8,
+    condition: "Cerah", icon: "sun",
+    rainProbability: 0, tempMax: 34, tempMin: 26,
+    uvIndex: 10.5, uvNow: 9.8, aqi: 55, pm25: 18,
+  },
+  morning: {
+    temperature: 26, feelsLike: 27, humidity: 80, windSpeed: 4,
+    condition: "Cerah", icon: "sun",
+    rainProbability: 5, tempMax: 32, tempMin: 25,
+    uvIndex: 4.2, uvNow: 1.2, aqi: 42, pm25: 12,
+  },
+};
+
 /** Widget cuaca + kualitas udara cluster (Open-Meteo via /api/weather) — tampil di dashboard. */
-export function WeatherWidget() {
-  const [data, setData] = useState<WeatherData | null>(null);
+export function WeatherWidget({ mock, forceHour }: { mock?: "bad" | "uv" | "morning"; forceHour?: number } = {}) {
+  const [data, setData] = useState<WeatherData | null>(mock ? MOCKS[mock] : null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (mock) return;
     let cancelled = false;
     fetch("/api/weather")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("bad status"))))
@@ -81,7 +148,7 @@ export function WeatherWidget() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [mock]);
 
   if (failed) return null;
   if (!data) {
@@ -101,6 +168,8 @@ export function WeatherWidget() {
   const Icon = ICONS[data.icon] ?? Cloud;
   const aqi = data.aqi != null ? aqiInfo(data.aqi) : null;
   const uv = data.uvIndex != null ? uvInfo(data.uvIndex) : null;
+  const hour = forceHour ?? new Date().getHours();
+  const advice = getHealthAdvice(data, hour);
 
   return (
     <Card className="overflow-hidden">
@@ -171,11 +240,35 @@ export function WeatherWidget() {
                 <span className="text-muted-foreground">PM2.5 {Math.round(data.pm25)} µg/m³</span>
               )}
             </span>
-            {data.aqi > 100 && (
-              <p className="w-full text-muted-foreground">
-                ⚠️ Udara sedang kurang sehat — disarankan mengurangi aktivitas luar ruang & pakai masker.
-              </p>
+          </div>
+        )}
+
+        {/* Himbauan kesehatan — otomatis berdasarkan kondisi & jam */}
+        {advice && (
+          <div
+            className={`flex items-start gap-3 rounded-lg px-3 py-2.5 text-xs ring-1 ring-inset ${
+              advice.tone === "warning"
+                ? "bg-red-500/10 ring-red-500/20"
+                : "bg-green-500/10 ring-green-500/20"
+            }`}
+          >
+            {advice.tone === "warning" ? (
+              <ShieldAlert className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400" />
+            ) : (
+              <HeartPulse className="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />
             )}
+            <div>
+              <p
+                className={`font-semibold ${
+                  advice.tone === "warning"
+                    ? "text-red-700 dark:text-red-300"
+                    : "text-green-700 dark:text-green-300"
+                }`}
+              >
+                {advice.title}
+              </p>
+              <p className="mt-0.5 leading-relaxed text-muted-foreground">{advice.text}</p>
+            </div>
           </div>
         )}
       </CardContent>
