@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { LinkifiedText } from "@/components/shared/linkified-text";
 
 type NotificationRow = {
   id: string;
@@ -126,7 +127,9 @@ export function NotificationsList({
                       <p className={`text-sm font-semibold ${n.read ? "text-muted-foreground" : ""}`}>{n.title}</p>
                       {!n.read && <Badge className="text-[10px]">Baru</Badge>}
                     </div>
-                    <p className="mt-0.5 whitespace-pre-line break-words text-sm text-muted-foreground">{n.body}</p>
+                    <p className="mt-0.5 whitespace-pre-line break-words text-sm text-muted-foreground">
+                      <LinkifiedText text={n.body} />
+                    </p>
                     <p className="mt-1 text-xs text-muted-foreground/70">{timeAgo(n.createdAt)}</p>
                   </div>
                 </CardContent>

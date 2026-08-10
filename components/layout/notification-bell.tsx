@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowUpRight, Bell, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LinkifiedText } from "@/components/shared/linkified-text";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -146,7 +147,7 @@ export function NotificationBell({
                   {n.title}
                 </span>
                 <span className="line-clamp-2 whitespace-pre-line break-words text-xs text-muted-foreground">
-                  {n.body}
+                  <LinkifiedText text={n.body} />
                 </span>
                 <span className="text-xs text-muted-foreground">{timeAgo(n.createdAt)}</span>
               </DropdownMenuItem>
@@ -175,7 +176,7 @@ export function NotificationBell({
               </CardHeader>
               <CardContent className="pt-0">
                 <p className="whitespace-pre-line break-words text-sm leading-relaxed text-foreground">
-                  {detail.body}
+                  <LinkifiedText text={detail.body} />
                 </p>
               </CardContent>
               <CardFooter className="flex justify-end gap-2 pt-2">
