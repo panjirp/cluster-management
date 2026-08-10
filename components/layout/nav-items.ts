@@ -19,6 +19,10 @@ import {
   Bell,
   Landmark,
   FileText,
+  QrCode,
+  Package,
+  Vote,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,6 +40,10 @@ export const mainNavItems: NavItem[] = [
   { href: "/facilities", label: "Fasilitas", icon: Landmark },
   { href: "/directory", label: "Direktori", icon: Contact },
   { href: "/events", label: "Info & Acara", icon: CalendarDays },
+  { href: "/gallery", label: "Galeri Acara", icon: Images },
+  { href: "/guest-passes", label: "QR Pass Tamu", icon: QrCode },
+  { href: "/parcels", label: "Titip Paket", icon: Package },
+  { href: "/polls", label: "Polling Warga", icon: Vote },
   { href: "/letters", label: "Surat Edaran", icon: FileText },
   { href: "/notifications", label: "Notifikasi", icon: Bell },
   { href: "/emergency", label: "Darurat", icon: Siren },

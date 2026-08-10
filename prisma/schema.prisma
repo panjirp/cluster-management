@@ -114,6 +114,11 @@ model User {
   reviewedProofs     PaymentProof[] @relation("ReviewedPaymentProof")
   deviceTokens       DeviceToken[]
   webPushSubscriptions WebPushSubscription[]
+  guestPasses        GuestPass[]
+  parcels            Parcel[]
+  polls              Poll[]
+  pollVotes          PollVote[]
+  galleryPhotos      GalleryPhoto[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 }
@@ -177,6 +182,8 @@ model House {
   residents    User[]
   chatMessages GroupChatMessage[]
   monthlyDues  MonthlyDue[]
+  guestPasses  GuestPass[]
+  parcels      Parcel[]
   createdAt    DateTime     @default(now())
 }
 
@@ -269,6 +276,7 @@ model Event {
   rsvps       EventRSVP[]
   durationMinutes Int?
   cost            Int?
+  galleryPhotos GalleryPhoto[]
   createdAt   DateTime    @default(now())
 }
 
@@ -342,6 +350,7 @@ model Setting {
   cashSheetUrl         String?
   duesSheetUrl         String?
   emergencyNotifyPhone String?
+  gatePin              String? @default("0000")
 }
 
 model EmergencyAlert {
@@ -376,4 +385,118 @@ model SuratEdaran {
   filePath    String
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
+}
+
+// ===== QR Pass Tamu =====
+
+enum GuestPassStatus {
+  ACTIVE
+  USED
+  REVOKED
+}
+
+enum VehicleType {
+  MOBIL
+  MOTOR
+  LAINNYA
+}
+
+model GuestPass {
+  id          String          @id @default(cuid())
+  code        String          @unique // kode pendek utk input manual satpam, mis. BC-4F7A
+  host        User            @relation(fields: [hostId], references: [id])
+  hostId      String
+  house       House?          @relation(fields: [houseId], references: [id])
+  houseId     String?
+  guestName   String
+  guestPhone  String?
+  vehicleType VehicleType     @default(MOTOR)
+  plateNumber String?
+  purpose     String
+  validUntil  DateTime
+  status      GuestPassStatus @default(ACTIVE)
+  scannedAt   DateTime?
+  scannedBy   String?
+  createdAt   DateTime        @default(now())
+
+  @@index([hostId])
+  @@index([status, validUntil])
+}
+
+// ===== Titip Paket =====
+
+enum ParcelStatus {
+  WAITING
+  PICKED_UP
+}
+
+model Parcel {
+  id           String       @id @default(cuid())
+  house        House?       @relation(fields: [houseId], references: [id])
+  houseId      String?
+  resident     User?        @relation(fields: [residentId], references: [id])
+  residentId   String?
+  courierName  String
+  senderName   String?
+  description  String?
+  photoUrl     String?
+  status       ParcelStatus @default(WAITING)
+  pickedUpAt   DateTime?
+  loggedBy     String       @default("Pos Satpam")
+  loggedByAdminId String?
+  createdAt    DateTime     @default(now())
+
+  @@index([houseId])
+  @@index([residentId])
+  @@index([status])
+}
+
+// ===== Polling Warga =====
+
+model Poll {
+  id          String       @id @default(cuid())
+  title       String
+  question    String
+  isMultiple  Boolean      @default(false)
+  endsAt      DateTime?
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdById String
+  options     PollOption[]
+  createdAt   DateTime     @default(now())
+}
+
+model PollOption {
+  id      String     @id @default(cuid())
+  poll    Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId  String
+  label   String
+  sort    Int        @default(0)
+  votes   PollVote[]
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId  String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime   @default(now())
+
+  @@unique([optionId, userId])
+  @@index([userId])
+}
+
+// ===== Galeri Acara =====
+
+model GalleryPhoto {
+  id           String   @id @default(cuid())
+  event        Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String?
+  filePath     String
+  caption      String?
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  @@index([eventId])
 }

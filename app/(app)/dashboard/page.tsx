@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { computeTotals } from "@/lib/cash";
 import GroupChat from "@/components/chat/group-chat";
+import { WeatherWidget } from "@/components/dashboard/weather-widget";
 
 const activityActionLabels: Record<string, string> = {
   UPDATE_COMPLAINT_STATUS: "Pengaduan",
@@ -238,6 +239,7 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-6">
         <DashboardHeader name={session.user.name ?? "Warga"} />
+        <WeatherWidget />
         <UpcomingEventsSection events={upcomingEvents} />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -338,6 +340,7 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-6">
         <DashboardHeader name={session.user.name ?? "Admin"} />
+        <WeatherWidget />
         <UpcomingEventsSection events={upcomingEvents} />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -413,6 +416,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <DashboardHeader name={session.user.name ?? "Bendahara"} />
+      <WeatherWidget />
       <UpcomingEventsSection events={upcomingEvents} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
