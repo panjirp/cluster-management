@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { NavLinks } from "@/components/layout/nav-links";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { InstagramLink } from "@/components/layout/instagram-link";
+import { SupportContact } from "@/components/layout/support-contact";
 import type { Role } from "@/app/generated/prisma/client";
 
 export function MobileNav({ role, badges }: { role: Role; badges?: Record<string, number> }) {
@@ -25,8 +26,9 @@ export function MobileNav({ role, badges }: { role: Role; badges?: Record<string
         <nav className="min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
           <NavLinks role={role} badges={badges} onNavigate={() => setOpen(false)} />
         </nav>
-        <div className="shrink-0 pt-4">
+        <div className="flex shrink-0 items-center gap-1 pt-4">
           <InstagramLink />
+          <SupportContact />
         </div>
       </SheetContent>
     </Sheet>
