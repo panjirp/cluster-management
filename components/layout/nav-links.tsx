@@ -1,11 +1,12 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/app/generated/prisma/client";
 import { mainNavItems, bendaharaNavItems, adminNavItems, type NavItem } from "@/components/layout/nav-items";
-import { Upload, Wallet } from "lucide-react";
+import { Upload } from "lucide-react";
 
 function NavLink({
   item,
@@ -59,7 +60,8 @@ export function NavLinks({
   function isActive(href: string): boolean {
     if (pathname === href) return true;
     if (!pathname.startsWith(href + "/")) return false;
-    if (href === "/cash" && pathname.startsWith("/cash/dues/proof-submit")) return false;
+    if (href === "/cash" && pathname.startsWith("/cash/dues")) return false;
+    if (href === "/cash/dues" && pathname.startsWith("/cash/dues/proof-submit")) return false;
     return true;
   }
 
@@ -69,20 +71,20 @@ export function NavLinks({
       ? { href: "/admin/payment-proofs", label: "Pembayaran Kas", icon: Upload }
       : { href: "/cash/dues/proof-submit", label: "Pembayaran Kas", icon: Upload };
 
-  // "Iuran Kas" untuk warga: arahkan ke /cash/dues (auto-redirect ke riwayat rumah sendiri).
-  const duesNavItem: NavItem = { href: "/cash/dues", label: "Iuran Kas", icon: Wallet };
-
   return (
     <>
       {mainNavItems.map((item) => {
         if (role === "WARGA") {
-          // "Iuran Kas": hanya muncul utk warga yg rumahnya masuk whitelist (Setting.duesAccessHouseIds).
+          // "Uang Kas": hanya utk warga yg rumahnya masuk whitelist (Setting.duesAccessHouseIds).
+          // Data iuran (riwayat + status + upload bukti) sudah ada di "Pembayaran Kas" (/cash/dues/proof-submit) — item "Iuran Kas" terpisah dihapus utk warga.
           if (item.href === "/cash") {
             if (!canViewDues) return null;
-            return <NavLink key="warga-dues" item={duesNavItem} active={isActive("/cash/dues")} onNavigate={onNavigate} />;
+            return <NavLink key="warga-cash" item={item} active={isActive("/cash")} onNavigate={onNavigate} />;
           }
+          // "Pembayaran Kas": whitelist saja.
           if (item.href === "/cash/dues/proof-submit") {
-            return null;
+            if (!canViewDues) return null;
+            return <NavLink key="warga-proof" item={paymentNavItem} active={isActive("/cash/dues/proof-submit")} onNavigate={onNavigate} />;
           }
         }
         const resolved = item.href === "/cash/dues/proof-submit" ? paymentNavItem : item;

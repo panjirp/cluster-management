@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Download, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { wargaCanViewCash } from "@/lib/cash-access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CashChart } from "@/components/cash/cash-chart";
@@ -19,10 +20,11 @@ function formatRupiah(value: number) {
 
 export default async function CashPage() {
   const session = await requireUser();
-  // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
-  if (session.user.role === "WARGA") {
+  // WARGA: hanya jika rumahnya masuk whitelist (Setting.duesAccessHouseIds).
+  if (!(await wargaCanViewCash(session.user.role, session.user.houseId))) {
     redirect("/dashboard");
   }
+  const isWarga = session.user.role === "WARGA";
   const isBendahara = session.user.role === "BENDAHARA";
   const canRemind = isBendahara || session.user.role === "ADMIN";
 
@@ -52,22 +54,24 @@ export default async function CashPage() {
           <p className="text-sm text-muted-foreground">Transparansi keuangan cluster Barcelona Cove</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            render={
-              <a href="/api/cash/transactions/export">
-                <Download data-icon="inline-start" />
-                Export CSV
-              </a>
-            }
-          />
+          {!isWarga && (
+            <Button
+              variant="outline"
+              render={
+                <a href="/api/cash/transactions/export">
+                  <Download data-icon="inline-start" />
+                  Export CSV
+                </a>
+              }
+            />
+          )}
           <Button variant="outline" render={<Link href="/cash/annual">Rekap Tahunan</Link>} />
-          <Button variant="outline" render={<Link href="/cash/dues">Iuran Bulanan</Link>} />
+          {!isWarga && <Button variant="outline" render={<Link href="/cash/dues">Iuran Bulanan</Link>} />}
           {canRemind && (
             <Button variant="outline" render={<Link href="/cash/dues/reminders"><Send data-icon="inline-start" /> Kirim Pengingat WA</Link>} />
           )}
-          {isBendahara && <ImportSheetDialog defaultSheetUrl={setting?.cashSheetUrl} />}
-          {isBendahara && (
+          {!isWarga && isBendahara && <ImportSheetDialog defaultSheetUrl={setting?.cashSheetUrl} />}
+          {!isWarga && isBendahara && (
             <Button render={<Link href="/cash/transactions/new">Tambah Transaksi</Link>} />
           )}
         </div>

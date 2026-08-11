@@ -31,7 +31,8 @@ export default async function DuesPage({
       const allowed = parseDuesAccessHouseIds(setting?.duesAccessHouseIds);
       const houseAllowed = !!house && allowed.includes(house.blockNumber.toUpperCase());
       if (houseAllowed) {
-        redirect(`/cash/dues/house/${session.user.houseId}`);
+        // Data iuran warga kini satu pintu: halaman "Pembayaran Kas" (proof-submit) menampilkan riwayat + upload bukti.
+        redirect("/cash/dues/proof-submit");
       }
     }
     redirect("/dashboard");

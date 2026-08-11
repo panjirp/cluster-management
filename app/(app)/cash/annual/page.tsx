@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { wargaCanViewCash } from "@/lib/cash-access";
 import { BackLink } from "@/components/shared/back-link";
 import { AnnualCashSummary } from "@/components/cash/annual-cash-summary";
 
@@ -9,8 +10,8 @@ export const metadata: Metadata = { title: "Rekap Tahunan Kas" };
 
 export default async function AnnualCashPage() {
   const session = await requireUser();
-  // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
-  if (session.user.role === "WARGA") {
+  // WARGA: hanya jika rumahnya masuk whitelist (Setting.duesAccessHouseIds).
+  if (!(await wargaCanViewCash(session.user.role, session.user.houseId))) {
     redirect("/dashboard");
   }
   const transactions = await prisma.cashTransaction.findMany({ orderBy: { date: "desc" } });
