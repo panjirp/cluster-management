@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { parseDuesAccessHouseIds } from "@/lib/cash";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Navbar } from "@/components/layout/navbar";
 import { CopyrightFooter } from "@/components/layout/copyright-footer";
@@ -39,6 +40,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const badges = await getNavBadges(session.user.role);
 
+  // Whitelist "Iuran Kas" utk warga: hanya rumah di Setting.duesAccessHouseIds.
+  let canViewDues = session.user.role !== "WARGA";
+  if (session.user.role === "WARGA" && session.user.houseId) {
+    const [setting, house] = await Promise.all([
+      prisma.setting.findUnique({ where: { id: "singleton" }, select: { duesAccessHouseIds: true } }),
+      prisma.house.findUnique({ where: { id: session.user.houseId }, select: { blockNumber: true } }),
+    ]);
+    const allowed = parseDuesAccessHouseIds(setting?.duesAccessHouseIds);
+    canViewDues = !!house && allowed.includes(house.blockNumber.toUpperCase());
+  }
+
   const [notifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({
       where: { userId: session.user.id },
@@ -54,7 +66,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <FcmPushRegister />
       <AssistantBot />
       <div className="flex min-h-screen flex-1">
-        <Sidebar role={session.user.role} badges={badges} />
+        <Sidebar role={session.user.role} badges={badges} canViewDues={canViewDues} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Navbar
             name={session.user.name ?? session.user.email ?? ""}
@@ -62,11 +74,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             badges={badges}
             notifications={notifications.map((n) => ({ ...n, createdAt: n.createdAt.toISOString() }))}
             unreadCount={unreadCount}
+            canViewDues={canViewDues}
           />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
-          <div className="px-4 pb-4 sm:px-6">
+          <div className="px-4 pt-4 sm:px-6">
             <WebPushRegister />
           </div>
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
           <CopyrightFooter />
         </div>
       </div>

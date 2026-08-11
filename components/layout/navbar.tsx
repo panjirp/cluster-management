@@ -23,17 +23,19 @@ export function Navbar({
   badges,
   notifications,
   unreadCount,
+  canViewDues,
 }: {
   name: string;
   role: Role;
   badges?: Record<string, number>;
   notifications: NotificationRow[];
   unreadCount: number;
+  canViewDues?: boolean;
 }) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b px-4 sm:px-6">
       <div className="flex items-center gap-2">
-        <MobileNav role={role} badges={badges} />
+        <MobileNav role={role} badges={badges} canViewDues={canViewDues} />
       </div>
       <div className="flex items-center gap-2">
         <GlobalSearch />

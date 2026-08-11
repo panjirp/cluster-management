@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/app/generated/prisma/client";
 import { mainNavItems, bendaharaNavItems, adminNavItems, type NavItem } from "@/components/layout/nav-items";
-import { Upload } from "lucide-react";
+import { Upload, Wallet } from "lucide-react";
 
 function NavLink({
   item,
@@ -44,10 +44,12 @@ function NavLink({
 export function NavLinks({
   role,
   badges,
+  canViewDues,
   onNavigate,
 }: {
   role: Role;
   badges?: Record<string, number>;
+  canViewDues?: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -67,15 +69,21 @@ export function NavLinks({
       ? { href: "/admin/payment-proofs", label: "Pembayaran Kas", icon: Upload }
       : { href: "/cash/dues/proof-submit", label: "Pembayaran Kas", icon: Upload };
 
+  // "Iuran Kas" untuk warga: arahkan ke /cash/dues (auto-redirect ke riwayat rumah sendiri).
+  const duesNavItem: NavItem = { href: "/cash/dues", label: "Iuran Kas", icon: Wallet };
+
   return (
     <>
       {mainNavItems.map((item) => {
-        // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
-        if (
-          role === "WARGA" &&
-          (item.href === "/cash" || item.href === "/cash/dues/proof-submit")
-        ) {
-          return null;
+        if (role === "WARGA") {
+          // "Iuran Kas": hanya muncul utk warga yg rumahnya masuk whitelist (Setting.duesAccessHouseIds).
+          if (item.href === "/cash") {
+            if (!canViewDues) return null;
+            return <NavLink key="warga-dues" item={duesNavItem} active={isActive("/cash/dues")} onNavigate={onNavigate} />;
+          }
+          if (item.href === "/cash/dues/proof-submit") {
+            return null;
+          }
         }
         const resolved = item.href === "/cash/dues/proof-submit" ? paymentNavItem : item;
         return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 type ChatMessage = {
   id: string;
@@ -85,7 +85,7 @@ export default function GroupChat() {
   }, []);
 
   // Fetch messages
-  async function loadMessages() {
+  const loadMessages = useCallback(async () => {
     try {
       const res = await fetch("/api/group-chat");
       if (res.ok) {
@@ -97,13 +97,32 @@ export default function GroupChat() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadMessages();
-    const id = setInterval(loadMessages, 5000);
-    return () => clearInterval(id);
-  }, []);
+    let id: ReturnType<typeof setInterval> | null = setInterval(loadMessages, 5000);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (id) {
+          clearInterval(id);
+          id = null;
+        }
+      } else {
+        loadMessages();
+        if (!id) {
+          id = setInterval(loadMessages, 5000);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      if (id) clearInterval(id);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loadMessages]);
 
   // Scroll ke bawah hanya di dalam kotak chat, hanya saat pesan baru tiba
   // (tidak menycroll seluruh halaman dan tidak mengganggu saat polling).
@@ -139,10 +158,7 @@ export default function GroupChat() {
       const res = await fetch("/api/group-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: content.trim(),
-          houseId: selectedHouseId || null,
-        }),
+        body: JSON.stringify({ content: content.trim() }),
       });
       if (res.ok) {
         const msg = await res.json();

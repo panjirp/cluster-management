@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 const LAT = -6.2475;
 const LON = 107.1281;
 
-// Cache sederhana 10 menit agar tidak membebani Open-Meteo.
+// Cache sederhana 5 menit agar tidak membebani Open-Meteo.
 let cache: { at: number; data: unknown } | null = null;
-const CACHE_MS = 10 * 60 * 1000;
+const CACHE_MS = 5 * 60 * 1000;
 
 const WMO_LABELS: Record<number, { label: string; icon: string }> = {
   0: { label: "Cerah", icon: "sun" },

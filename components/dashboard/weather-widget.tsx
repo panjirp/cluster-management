@@ -12,6 +12,7 @@ import {
   Droplets,
   Factory,
   HeartPulse,
+  RefreshCw,
   ShieldAlert,
   Sun,
   Thermometer,
@@ -34,6 +35,7 @@ type WeatherData = {
   uvNow: number | null;
   aqi: number | null;
   pm25: number | null;
+  updatedAt?: string;
 };
 
 const ICONS: Record<string, typeof Sun> = {
@@ -68,6 +70,14 @@ function uvInfo(uv: number): { label: string; cls: string } {
 
 type Advice = { tone: "warning" | "positive"; title: string; text: string } | null;
 
+/** Format waktu update (WIB, mengikuti jam perangkat). */
+function formatUpdatedAt(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+}
+
 /**
  * Himbauan kesehatan berdasarkan kualitas udara, UV, cuaca, dan jam lokal.
  * - Udara buruk / UV sangat tinggi  -> pakai masker, kurangi aktivitas luar (apalagi sore).
@@ -77,6 +87,8 @@ function getHealthAdvice(d: WeatherData, hour: number): Advice {
   const aqi = d.aqi;
   const uv = d.uvNow ?? d.uvIndex;
   const isClear = d.icon === "sun" || d.icon === "cloud-sun";
+  // Sore: mendung ("cloud") juga aman — matahari tertutup, sudah teduh.
+  const isNotRainy = isClear || d.icon === "cloud";
   const rain = d.rainProbability ?? 0;
 
   const badAir = aqi != null && aqi > 100;
@@ -96,7 +108,7 @@ function getHealthAdvice(d: WeatherData, hour: number): Advice {
   if (
     hour >= 16 &&
     hour < 19 &&
-    isClear &&
+    isNotRainy &&
     rain < 40 &&
     !badAir &&
     !veryHighUv &&
@@ -161,16 +173,24 @@ export function WeatherWidget({ mock, forceHour }: { mock?: "bad" | "uv" | "morn
   useEffect(() => {
     if (mock) return;
     let cancelled = false;
-    fetch("/api/weather")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("bad status"))))
-      .then((d) => {
-        if (!cancelled) setData(d);
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      });
+
+    const loadWeather = () => {
+      fetch("/api/weather")
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error("bad status"))))
+        .then((d) => {
+          if (!cancelled) setData(d);
+        })
+        .catch(() => {
+          if (!cancelled) setFailed(true);
+        });
+    };
+
+    loadWeather();
+    // Auto-refresh setiap 5 menit (sync dengan cache API).
+    const id = setInterval(loadWeather, 5 * 60 * 1000);
     return () => {
       cancelled = true;
+      clearInterval(id);
     };
   }, [mock]);
 
@@ -194,6 +214,7 @@ export function WeatherWidget({ mock, forceHour }: { mock?: "bad" | "uv" | "morn
   const uv = data.uvIndex != null ? uvInfo(data.uvIndex) : null;
   const hour = forceHour ?? new Date().getHours();
   const advice = getHealthAdvice(data, hour);
+  const updatedAtText = formatUpdatedAt(data.updatedAt);
 
   return (
     <Card className="overflow-hidden">
@@ -210,6 +231,11 @@ export function WeatherWidget({ mock, forceHour }: { mock?: "bad" | "uv" | "morn
               </p>
               <p className="text-xs text-muted-foreground">
                 Cuaca Barcelona Cove · terasa seperti {Math.round(data.feelsLike)}°C
+                {updatedAtText && (
+                  <span className="inline-flex items-center gap-1" title="Data diperbarui otomatis">
+                    · <RefreshCw className="size-3" /> {updatedAtText}
+                  </span>
+                )}
               </p>
             </div>
           </div>

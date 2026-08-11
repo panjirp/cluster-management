@@ -9,7 +9,7 @@ import { GenerateDuesButton } from "@/components/cash/generate-dues-button";
 import { DuesAmountSetting } from "@/components/cash/dues-amount-setting";
 import { ImportDuesSheetDialog } from "@/components/cash/import-dues-sheet-dialog";
 import { compareBlockNumber } from "@/lib/sort";
-import { countOverdueMonths } from "@/lib/cash";
+import { countOverdueMonths, parseDuesAccessHouseIds } from "@/lib/cash";
 import { BackLink } from "@/components/shared/back-link";
 
 export const metadata: Metadata = { title: "Iuran Bulanan" };
@@ -20,8 +20,20 @@ export default async function DuesPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const session = await requireUser();
-  // Fitur kas: nonaktif sementara untuk warga (aktif kembali jika diminta)
+  // Warga hanya melihat status iuran rumahnya sendiri, dan hanya jika rumahnya
+  // masuk whitelist akses (Setting.duesAccessHouseIds) — selain itu redirect dashboard.
   if (session.user.role === "WARGA") {
+    if (session.user.houseId) {
+      const [setting, house] = await Promise.all([
+        prisma.setting.findUnique({ where: { id: "singleton" }, select: { duesAccessHouseIds: true } }),
+        prisma.house.findUnique({ where: { id: session.user.houseId }, select: { blockNumber: true } }),
+      ]);
+      const allowed = parseDuesAccessHouseIds(setting?.duesAccessHouseIds);
+      const houseAllowed = !!house && allowed.includes(house.blockNumber.toUpperCase());
+      if (houseAllowed) {
+        redirect(`/cash/dues/house/${session.user.houseId}`);
+      }
+    }
     redirect("/dashboard");
   }
   const isBendahara = session.user.role === "BENDAHARA";

@@ -5,6 +5,22 @@ const MONTH_LABELS = [
   "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
 ];
 
+/**
+ * Daftar blockNumber rumah yang diizinkan WARGA melihat status iurannya sendiri.
+ * Whitelist disimpan di Setting.duesAccessHouseIds (JSON array), mis. ["BC3-22"].
+ * Kosong/null = belum ada akses utk warga.
+ */
+export function parseDuesAccessHouseIds(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map((b: unknown) => String(b).trim().toUpperCase()).filter(Boolean);
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 export function buildMonthlySummary(transactions: CashTransaction[], monthsToShow = 6): MonthlySummary[] {
   const sorted = [...transactions].sort((a, b) => a.date.getTime() - b.date.getTime());
 

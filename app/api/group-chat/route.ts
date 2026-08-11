@@ -25,7 +25,7 @@ export async function GET() {
   } catch (error) {
     if (error instanceof UnauthorizedError) return NextResponse.json({ error: error.message }, { status: 401 });
     if (error instanceof ForbiddenError) return NextResponse.json({ error: error.message }, { status: 403 });
-    throw error;
+    return NextResponse.json({ error: "Terjadi kesalahan." }, { status: 500 });
   }
 }
 
@@ -33,22 +33,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser();
-    const { content, houseId } = await req.json();
+    const { content } = await req.json();
 
     if (!content || typeof content !== "string" || !content.trim()) {
       return NextResponse.json({ error: "Pesan tidak boleh kosong." }, { status: 400 });
     }
 
-    // Validate houseId if provided
-    if (houseId !== undefined && houseId !== null) {
-      if (typeof houseId !== "string") {
-        return NextResponse.json({ error: "houseId tidak valid." }, { status: 400 });
-      }
-      const house = await prisma.house.findUnique({ where: { id: houseId } });
-      if (!house) {
-        return NextResponse.json({ error: "Rumah tidak ditemukan." }, { status: 400 });
-      }
-    }
+    // houseId otomatis dari akun pengirim (anti IDOR — tidak boleh dikirim oleh client).
+    const houseId = session.user.houseId;
 
     const message = await prisma.groupChatMessage.create({
       data: {
@@ -73,6 +65,6 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof UnauthorizedError) return NextResponse.json({ error: error.message }, { status: 401 });
     if (error instanceof ForbiddenError) return NextResponse.json({ error: error.message }, { status: 403 });
-    throw error;
+    return NextResponse.json({ error: "Terjadi kesalahan." }, { status: 500 });
   }
 }

@@ -351,6 +351,8 @@ model Setting {
   duesSheetUrl         String?
   emergencyNotifyPhone String?
   gatePin              String? @default("0000")
+  // Whitelist akses "Iuran Kas" utk warga — JSON array blockNumber, mis. ["BC3-22"]
+  duesAccessHouseIds   String?
 }
 
 model EmergencyAlert {
