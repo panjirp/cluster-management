@@ -13,11 +13,9 @@ import type { Role } from "@/app/generated/prisma/client";
 export function MobileNav({
   role,
   badges,
-  canViewDues,
 }: {
   role: Role;
   badges?: Record<string, number>;
-  canViewDues?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -32,7 +30,7 @@ export function MobileNav({
           <BrandMark />
         </SheetHeader>
         <nav className="min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-          <NavLinks role={role} badges={badges} canViewDues={canViewDues} onNavigate={() => setOpen(false)} />
+          <NavLinks role={role} badges={badges} onNavigate={() => setOpen(false)} />
         </nav>
         <div className="flex shrink-0 items-center gap-1 pt-4">
           <InstagramLink />

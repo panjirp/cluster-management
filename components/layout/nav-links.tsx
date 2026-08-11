@@ -45,12 +45,10 @@ function NavLink({
 export function NavLinks({
   role,
   badges,
-  canViewDues,
   onNavigate,
 }: {
   role: Role;
   badges?: Record<string, number>;
-  canViewDues?: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -75,15 +73,12 @@ export function NavLinks({
     <>
       {mainNavItems.map((item) => {
         if (role === "WARGA") {
-          // "Uang Kas": hanya utk warga yg rumahnya masuk whitelist (Setting.duesAccessHouseIds).
-          // Data iuran (riwayat + status + upload bukti) sudah ada di "Pembayaran Kas" (/cash/dues/proof-submit) — item "Iuran Kas" terpisah dihapus utk warga.
+          // "Uang Kas" + "Pembayaran Kas": tampil utk semua warga.
+          // Data iuran (riwayat + status + upload bukti) ada di "Pembayaran Kas" (/cash/dues/proof-submit) — item "Iuran Kas" terpisah dihapus utk warga.
           if (item.href === "/cash") {
-            if (!canViewDues) return null;
             return <NavLink key="warga-cash" item={item} active={isActive("/cash")} onNavigate={onNavigate} />;
           }
-          // "Pembayaran Kas": whitelist saja.
           if (item.href === "/cash/dues/proof-submit") {
-            if (!canViewDues) return null;
             return <NavLink key="warga-proof" item={paymentNavItem} active={isActive("/cash/dues/proof-submit")} onNavigate={onNavigate} />;
           }
         }

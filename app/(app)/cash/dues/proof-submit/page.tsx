@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { wargaCanViewCash } from "@/lib/cash-access";
 import { ProofSubmitClient } from "./proof-submit-client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,10 +18,6 @@ export default async function ProofSubmitPage() {
   // Halaman ini khusus warga — pengurus diarahkan ke review bukti
   if (role !== "WARGA") {
     redirect("/cash/dues");
-  }
-  // WARGA: hanya jika rumahnya masuk whitelist (Setting.duesAccessHouseIds).
-  if (!(await wargaCanViewCash(role, session.user.houseId))) {
-    redirect("/dashboard");
   }
 
   const houseId = session.user.houseId;

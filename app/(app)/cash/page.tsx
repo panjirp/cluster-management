@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Download, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { wargaCanViewCash } from "@/lib/cash-access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CashChart } from "@/components/cash/cash-chart";
@@ -20,10 +19,6 @@ function formatRupiah(value: number) {
 
 export default async function CashPage() {
   const session = await requireUser();
-  // WARGA: hanya jika rumahnya masuk whitelist (Setting.duesAccessHouseIds).
-  if (!(await wargaCanViewCash(session.user.role, session.user.houseId))) {
-    redirect("/dashboard");
-  }
   const isWarga = session.user.role === "WARGA";
   const isBendahara = session.user.role === "BENDAHARA";
   const canRemind = isBendahara || session.user.role === "ADMIN";
