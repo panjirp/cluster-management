@@ -134,7 +134,7 @@ function SubmitProofDialog({
           <DialogHeader>
             <DialogTitle>Ajukan Pembayaran</DialogTitle>
             <DialogDescription>
-              Upload bukti pembayaran iuran {monthLabel} — Rp {amount.toLocaleString('id-ID')}
+              Upload bukti pembayaran kas {monthLabel} — Rp {amount.toLocaleString('id-ID')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -286,14 +286,14 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
       {rows.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            Belum ada data iuran untuk rumah Anda. Hubungi bendahara.
+            Belum ada data kas untuk rumah Anda. Hubungi bendahara.
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Riwayat Iuran</CardTitle>
-            <CardDescription>Status pembayaran iuran bulanan Anda</CardDescription>
+            <CardDescription>Status pembayaran kas bulanan Anda</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Compact: kartu untuk HP potrait & landscape (hingga 1023px), tabel di desktop */}

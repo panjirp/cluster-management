@@ -360,7 +360,7 @@ export function ReminderSender({
 
       {rows.length === 0 && (
         <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-          Semua rumah sudah bayar iuran {monthLabel} {year}. 🎉
+          Semua rumah sudah bayar kas {monthLabel} {year}. 🎉
         </p>
       )}
 

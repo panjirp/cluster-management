@@ -73,7 +73,7 @@ export function HouseActions({
       <EditHouseDialog houseId={houseId} blockNumber={blockNumber} residentName={residentName} contactPhone={contactPhone} />
       <ConfirmDeleteButton
         title={`Hapus rumah ${blockNumber}?`}
-        description="Data iuran bulanan rumah ini juga akan terhapus. Tindakan ini tidak bisa dibatalkan."
+        description="Data kas bulanan rumah ini juga akan terhapus. Tindakan ini tidak bisa dibatalkan."
         onConfirm={handleDelete}
       />
     </div>

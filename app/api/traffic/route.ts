@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 
-// Koordinat untuk area Daifuku — Jl. Telaga Asih (dekat Metland Telaga Murni)
-const POINTS = {
-  daifukuToTelagaAsih: "-6.2575,107.1040",  // Daifuku → Jl. Telaga Asih
-  telagaAsihToDaifuku: "-6.2580,107.1035",  // Jl. Telaga Asih → Daifuku
-};
+// Koordinat: Gerbang Metland ↔ Masjid Jami At-Taqwa (2 arah)
+const POINT_KELUAR = "-6.2580,107.1035"; // Gerbang Metland → Masjid
+const POINT_MASUK = "-6.2585,107.1030";   // Masjid → Gerbang Metland
 
 export async function GET() {
   const apiKey = process.env.TOMTOM_API_KEY;
@@ -13,10 +11,9 @@ export async function GET() {
   }
 
   try {
-    // Fetch 2 arah sekaligus
     const [res1, res2] = await Promise.all([
-      fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${apiKey}&point=${POINTS.daifukuToTelagaAsih}&unit=KMPH`),
-      fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${apiKey}&point=${POINTS.telagaAsihToDaifuku}&unit=KMPH`),
+      fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${apiKey}&point=${POINT_KELUAR}&unit=KMPH`),
+      fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${apiKey}&point=${POINT_MASUK}&unit=KMPH`),
     ]);
 
     if (!res1.ok || !res2.ok) {
@@ -24,8 +21,8 @@ export async function GET() {
     }
 
     const [d1, d2] = await Promise.all([res1.json(), res2.json()]);
-    const seg1 = d1.flowSegmentData;
-    const seg2 = d2.flowSegmentData;
+    const s1 = d1.flowSegmentData;
+    const s2 = d2.flowSegmentData;
 
     function getStatus(current: number, free: number, closure: boolean): "lancar" | "sedang" | "macet" {
       if (closure) return "macet";
@@ -35,30 +32,29 @@ export async function GET() {
       return "lancar";
     }
 
-    const arah1 = {
-      dari: "Daifuku",
-      ke: "Jl. Telaga Asih",
-      currentSpeed: seg1.currentSpeed,
-      freeFlowSpeed: seg1.freeFlowSpeed,
-      status: getStatus(seg1.currentSpeed, seg1.freeFlowSpeed, seg1.roadClosure),
+    const keluar = {
+      dari: "Gerbang Metland",
+      ke: "Masjid Jami At-Taqwa",
+      currentSpeed: s1.currentSpeed,
+      freeFlowSpeed: s1.freeFlowSpeed,
+      status: getStatus(s1.currentSpeed, s1.freeFlowSpeed, s1.roadClosure),
     };
 
-    const arah2 = {
-      dari: "Jl. Telaga Asih",
-      ke: "Daifuku",
-      currentSpeed: seg2.currentSpeed,
-      freeFlowSpeed: seg2.freeFlowSpeed,
-      status: getStatus(seg2.currentSpeed, seg2.freeFlowSpeed, seg2.roadClosure),
+    const masuk = {
+      dari: "Masjid Jami At-Taqwa",
+      ke: "Gerbang Metland",
+      currentSpeed: s2.currentSpeed,
+      freeFlowSpeed: s2.freeFlowSpeed,
+      status: getStatus(s2.currentSpeed, s2.freeFlowSpeed, s2.roadClosure),
     };
 
-    // Status keseluruhan — pakai yang paling parah
     const statusOrder = { lancar: 0, sedang: 1, macet: 2 } as const;
-    const overallStatus = statusOrder[arah1.status] >= statusOrder[arah2.status] ? arah1.status : arah2.status;
+    const overallStatus = statusOrder[keluar.status] >= statusOrder[masuk.status] ? keluar.status : masuk.status;
 
     return NextResponse.json({
       overallStatus,
-      arah1,
-      arah2,
+      keluar,
+      masuk,
       updatedAt: new Date().toISOString(),
     });
   } catch {

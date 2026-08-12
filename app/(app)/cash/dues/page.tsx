@@ -20,7 +20,7 @@ export default async function DuesPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const session = await requireUser();
-  // Warga: data iuran satu pintu di "Pembayaran Kas" (proof-submit) — redirect semua warga.
+  // Warga: data kas satu pintu di "Pembayaran Kas" (proof-submit) — redirect semua warga.
   if (session.user.role === "WARGA") {
     redirect("/cash/dues/proof-submit");
   }
@@ -87,7 +87,7 @@ export default async function DuesPage({
       <BackLink href="/cash" label="Kembali ke Uang Kas" />
       <div>
         <h1 className="text-xl font-semibold sm:text-2xl">Iuran Bulanan</h1>
-        <p className="text-sm text-muted-foreground">Rekap status pembayaran iuran per rumah</p>
+        <p className="text-sm text-muted-foreground">Rekap status pembayaran kas per rumah</p>
       </div>
 
       {isBendahara && <DuesAmountSetting initialAmount={setting.duesAmount} />}

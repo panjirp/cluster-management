@@ -74,7 +74,7 @@ export default async function AdminDuesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Manajemen Iuran Bulanan</h1>
         <p className="text-muted-foreground">
-          Kelola status pembayaran iuran warga. Rumah yang "Belum Pernah Bayar" berarti belum pernah ada transaksi iuran sama sekali.
+          Kelola status pembayaran kas warga. Rumah yang "Belum Pernah Bayar" berarti belum pernah ada transaksi kas sama sekali.
         </p>
       </div>
 
@@ -89,7 +89,7 @@ export default async function AdminDuesPage() {
               Belum Pernah Bayar ({neverPaidHouses.length} rumah)
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Rumah-rumah ini belum pernah memiliki record iuran sama sekali. Ketika mereka mulai membayar, bulan pertama yang dibayar akan dihitung sampai sekarang.
+              Rumah-rumah ini belum pernah memiliki record kas sama sekali. Ketika mereka mulai membayar, bulan pertama yang dibayar akan dihitung sampai sekarang.
             </p>
 
             <div className="overflow-x-auto">

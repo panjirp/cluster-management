@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 
 /**
- * Pembayaran iuran via transfer ke rekening bendahara.
+ * Pembayaran kas via transfer ke rekening bendahara.
  * QRIS (Mayar) belum aktif — badge "Coming Soon" tetap tampil,
  * sementara ini arahkan warga ke transfer ke bendahara.
  */
@@ -43,7 +43,7 @@ export function MayarPaymentSection() {
           Pembayaran Online — QRIS
         </CardTitle>
         <CardDescription>
-          Bayar iuran secara online melalui QRIS
+          Bayar kas secara online melalui QRIS
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -55,7 +55,7 @@ export function MayarPaymentSection() {
             Coming Soon 🚧
           </Badge>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Pembayaran iuran via QRIS akan segera hadir.
+            Pembayaran kas via QRIS akan segera hadir.
           </p>
         </div>
 

@@ -19,11 +19,11 @@ export function GenerateDuesButton({ year, month }: { year: number; month: numbe
     setSubmitting(false);
 
     if (!res.ok) {
-      toast.error("Gagal membuat data iuran.");
+      toast.error("Gagal membuat data kas.");
       return;
     }
 
-    toast.success("Data iuran bulan ini berhasil dibuat.");
+    toast.success("Data kas bulan ini berhasil dibuat.");
     router.refresh();
   }
 

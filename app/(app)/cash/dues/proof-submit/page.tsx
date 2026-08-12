@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Pengajuan Pembayaran Iuran",
-  description: "Upload bukti pembayaran iuran bulanan",
+  title: "Pengajuan Pembayaran Kas",
+  description: "Upload bukti pembayaran kas bulanan",
 };
 
 /** Generate array bulan dari startYear/startMonth sampai sekarang */
@@ -46,8 +46,8 @@ export default async function ProofSubmitPage() {
     return (
       <div className="max-w-3xl space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold">Pengajuan Pembayaran Iuran</h1>
-          <p className="text-sm text-muted-foreground">Upload bukti pembayaran iuran bulanan</p>
+          <h1 className="text-2xl font-semibold">Pengajuan Pembayaran Kas</h1>
+          <p className="text-sm text-muted-foreground">Upload bukti pembayaran kas bulanan</p>
         </div>
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -129,11 +129,11 @@ export default async function ProofSubmitPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Pengajuan Pembayaran Iuran</h1>
+        <h1 className="text-2xl font-semibold">Pengajuan Pembayaran Kas</h1>
         <p className="text-sm text-muted-foreground">
           {neverPaid
-            ? "Anda belum pernah membayar iuran. Bulan pertama yang Anda bayar akan dihitung sampai sekarang."
-            : "Upload bukti pembayaran iuran bulanan"}
+            ? "Anda belum pernah membayar kas. Bulan pertama yang Anda bayar akan dihitung sampai sekarang."
+            : "Upload bukti pembayaran kas bulanan"}
         </p>
       </div>
 
@@ -145,7 +145,7 @@ export default async function ProofSubmitPage() {
               <div className="text-sm">
                 <p className="font-medium text-amber-900 dark:text-amber-200">Belum Pernah Bayar</p>
                 <p className="text-amber-700 dark:text-amber-300 mt-1">
-                  Rumah Anda belum pernah memiliki catatan iuran. Saat Anda mengajukan pembayaran pertama kali, bulan yang dipilih akan menjadi bulan mulai bayar dan akan dihitung sampai sekarang.
+                  Rumah Anda belum pernah memiliki catatan kas. Saat Anda mengajukan pembayaran pertama kali, bulan yang dipilih akan menjadi bulan mulai bayar dan akan dihitung sampai sekarang.
                 </p>
               </div>
             </div>

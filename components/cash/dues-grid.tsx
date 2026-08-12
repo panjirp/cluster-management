@@ -174,7 +174,7 @@ export function DuesGrid({
 
     if (!res.ok) {
       setHouses(previous);
-      toast.error("Gagal memperbarui status iuran.");
+      toast.error("Gagal memperbarui status kas.");
     }
   }
 

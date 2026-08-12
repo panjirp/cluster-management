@@ -87,7 +87,7 @@ function ProofActions({ proof }: { proof: any }) {
 
 export const metadata: Metadata = {
   title: "Review Bukti Pembayaran",
-  description: "Review bukti pembayaran iuran warga",
+  description: "Review bukti pembayaran kas warga",
 };
 
 export default async function PaymentProofsPage() {
@@ -150,7 +150,7 @@ export default async function PaymentProofsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Review Bukti Pembayaran</h1>
-        <p className="text-sm text-muted-foreground">Verifikasi bukti pembayaran iuran warga</p>
+        <p className="text-sm text-muted-foreground">Verifikasi bukti pembayaran kas warga</p>
       </div>
 
       {/* Stats cards */}

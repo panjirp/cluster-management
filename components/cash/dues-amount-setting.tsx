@@ -22,11 +22,11 @@ export function DuesAmountSetting({ initialAmount }: { initialAmount: number }) 
     setSubmitting(false);
 
     if (!res.ok) {
-      toast.error("Gagal menyimpan nominal iuran.");
+      toast.error("Gagal menyimpan nominal kas.");
       return;
     }
 
-    toast.success("Nominal iuran diperbarui.");
+    toast.success("Nominal kas diperbarui.");
     router.refresh();
   }
 

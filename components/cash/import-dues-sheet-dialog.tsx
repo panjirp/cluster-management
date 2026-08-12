@@ -133,13 +133,13 @@ export function ImportDuesSheetDialog({ defaultSheetUrl }: { defaultSheetUrl?: s
 
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(typeof body?.error === "string" ? body.error : "Gagal mengimpor iuran.");
+      toast.error(typeof body?.error === "string" ? body.error : "Gagal mengimpor kas.");
       return;
     }
 
     const result: { imported: number; skipped: number; housesCreated: number } = await res.json();
     toast.success(
-      `${result.imported} catatan iuran diimpor` +
+      `${result.imported} catatan kas diimpor` +
         (result.housesCreated > 0 ? `, ${result.housesCreated} rumah baru dibuat` : "") +
         (result.skipped > 0 ? `, ${result.skipped} dilewati.` : ".")
     );
@@ -168,7 +168,7 @@ export function ImportDuesSheetDialog({ defaultSheetUrl }: { defaultSheetUrl?: s
         <DialogHeader>
           <DialogTitle>Import Iuran dari Google Sheets</DialogTitle>
           <DialogDescription>
-            Tarik data matriks iuran per rumah per bulan dari Google Sheets (harus dapat diakses siapa saja yang punya
+            Tarik data matriks kas per rumah per bulan dari Google Sheets (harus dapat diakses siapa saja yang punya
             link). Rumah yang belum terdaftar akan dibuat otomatis; bulan yang sudah tercatat lunas tidak akan ditimpa.
           </DialogDescription>
         </DialogHeader>

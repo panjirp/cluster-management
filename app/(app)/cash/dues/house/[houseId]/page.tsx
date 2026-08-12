@@ -72,7 +72,7 @@ export default async function HouseDuesHistoryPage({
 
       {dues.length === 0 ? (
         <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
-          Belum ada catatan iuran untuk rumah ini.
+          Belum ada catatan kas untuk rumah ini.
         </div>
       ) : (
         <div className="space-y-2">

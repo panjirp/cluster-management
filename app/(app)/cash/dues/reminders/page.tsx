@@ -98,7 +98,7 @@ export default async function DuesRemindersPage({
       <div>
         <h1 className="text-2xl font-semibold">Kirim Pengingat WA</h1>
         <p className="text-sm text-muted-foreground">
-          Kirim pengingat iuran bulanan ke WhatsApp rumah yang belum bayar (via gateway Fonnte)
+          Kirim pengingat kas bulanan ke WhatsApp rumah yang belum bayar (via gateway Fonnte)
         </p>
       </div>
 

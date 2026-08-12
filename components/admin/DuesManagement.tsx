@@ -109,7 +109,7 @@ export default function DuesManagement({ records: initialRecords }: { records: D
               {filteredRecords.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                    Tidak ada data iuran.
+                    Tidak ada data kas.
                   </td>
                 </tr>
               ) : (
@@ -220,7 +220,7 @@ export default function DuesManagement({ records: initialRecords }: { records: D
         </div>
 
         <div className="mt-4 text-xs text-muted-foreground">
-          Menampilkan {filteredRecords.length} dari {records.filter(r => !r.neverPaid).length} data iuran.
+          Menampilkan {filteredRecords.length} dari {records.filter(r => !r.neverPaid).length} data kas.
         </div>
       </CardContent>
     </Card>
