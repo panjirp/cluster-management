@@ -88,7 +88,7 @@ export default function PerlintasanKeretaStatus() {
     : null;
 
   // Peta statis horizontal (lebar × kecil) dari TomTom
-  const staticMapUrl = `https://api.tomtom.com/map/1/staticimage?key=Bfe5LFWFhJzLBCBek0KyFSHt2UBFUvYj&zoom=8&center=107.1010,-6.2590&format=jpg&layer=basic&style=night&width=512&height=512`;
+  const staticMapUrl = `https://api.tomtom.com/map/1/staticimage?key=Bfe5LFWFhJzLBCBek0KyFSHt2UBFUvYj&zoom=14&center=107.1010,-6.2590&format=jpg&layer=basic&style=night&width=512&height=512`;
 
   if (failed) return null;
 
