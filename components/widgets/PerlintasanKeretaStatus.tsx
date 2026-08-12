@@ -88,7 +88,7 @@ export default function PerlintasanKeretaStatus() {
     : null;
 
   // Peta statis horizontal (lebar × kecil) dari TomTom
-  const staticMapUrl = `https://api.tomtom.com/map/1/staticimage?key=Bfe5LFWFhJzLBCBek0KyFSHt2UBFUvYj&zoom=16&center=107.1010,-6.2590&format=jpg&layer=basic&style=night&width=800&height=120`;
+  const staticMapUrl = `https://api.tomtom.com/map/1/staticimage?key=Bfe5LFWFhJzLBCBek0KyFSHt2UBFUvYj&zoom=16&center=107.1010,-6.2590&format=jpg&layer=basic&style=night&width=1024&height=128`;
 
   if (failed) return null;
 
@@ -147,7 +147,7 @@ export default function PerlintasanKeretaStatus() {
           <img
             src={staticMapUrl}
             alt="Peta perlintasan kereta"
-            className="w-full h-20 object-cover"
+            className="w-full h-auto max-h-24 object-cover"
             loading="lazy"
           />
           {/* Overlay status */}
