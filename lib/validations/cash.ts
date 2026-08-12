@@ -3,20 +3,28 @@ import { z } from "zod";
 export const transactionCategoryValues = [
   "IURAN_BULANAN",
   "DONASI",
+  "DANA_SOSIAL",
   "KEAMANAN",
   "KEBERSIHAN",
+  "OPERASIONAL",
   "PERBAIKAN",
   "ACARA",
+  "INVENTARIS",
+  "ADMINISTRASI",
   "LAINNYA",
 ] as const;
 
 export const transactionCategoryLabels: Record<(typeof transactionCategoryValues)[number], string> = {
   IURAN_BULANAN: "Iuran Bulanan",
   DONASI: "Donasi",
+  DANA_SOSIAL: "Dana Sosial",
   KEAMANAN: "Keamanan",
   KEBERSIHAN: "Kebersihan",
+  OPERASIONAL: "Operasional",
   PERBAIKAN: "Perbaikan",
   ACARA: "Acara",
+  INVENTARIS: "Inventaris",
+  ADMINISTRASI: "Administrasi",
   LAINNYA: "Lainnya",
 };
 

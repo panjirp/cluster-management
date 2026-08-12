@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
-import { Upload, FileText, CheckCircle, Download } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MayarPaymentSection } from "./mayar-payment-client";
+import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
+import { Upload, FileText, CheckCircle, Download, Eye } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { MayarPaymentSection } from './mayar-payment-client';
 import {
   Table,
   TableBody,
@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -23,30 +23,30 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const MONTH_LABELS = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
 
-const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  PENDING: { label: "Menunggu", variant: "outline" },
-  APPROVED: { label: "Disetujui", variant: "default" },
-  REJECTED: { label: "Ditolak", variant: "destructive" },
+const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  PENDING: { label: 'Menunggu', variant: 'outline' },
+  APPROVED: { label: 'Disetujui', variant: 'default' },
+  REJECTED: { label: 'Ditolak', variant: 'destructive' },
 };
 
-const DUE_STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-  lunas: { label: "Lunas", variant: "default" },
-  belum: { label: "Belum Bayar", variant: "secondary" },
-  menunggak: { label: "Menunggak", variant: "destructive" },
+const DUE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
+  lunas: { label: 'Lunas', variant: 'default' },
+  belum: { label: 'Belum Bayar', variant: 'secondary' },
+  menunggak: { label: 'Menunggak', variant: 'destructive' },
 };
 
 function formatRupiah(value: number) {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
 }
 
 type ProofWithDetails = {
@@ -68,10 +68,10 @@ type DueRow = {
   mayarInvoiceId: string | null;
 };
 
-function getDueStatus(row: DueRow, currentYear: number, currentMonth: number): "lunas" | "belum" | "menunggak" {
-  if (row.isPaid) return "lunas";
-  if (row.year < currentYear || (row.year === currentYear && row.month < currentMonth)) return "menunggak";
-  return "belum";
+function getDueStatus(row: DueRow, currentYear: number, currentMonth: number): 'lunas' | 'belum' | 'menunggak' {
+  if (row.isPaid) return 'lunas';
+  if (row.year < currentYear || (row.year === currentYear && row.month < currentMonth)) return 'menunggak';
+  return 'belum';
 }
 
 function SubmitProofDialog({
@@ -85,38 +85,37 @@ function SubmitProofDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState('');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const file = formData.get("file") as File | null;
+    const file = formData.get('file') as File | null;
 
     if (!file) {
-      toast.error("Pilih file terlebih dahulu.");
+      toast.error('Pilih file terlebih dahulu.');
       return;
     }
 
     startTransition(async () => {
       try {
-        const res = await fetch("/api/cash/dues/proof-submit", {
-          method: "POST",
+        const res = await fetch('/api/cash/dues/proof-submit', {
+          method: 'POST',
           body: formData,
         });
 
         if (!res.ok) {
           const body = await res.json().catch(() => null);
-          toast.error(body?.error ?? "Gagal mengajukan pembayaran.");
+          toast.error(body?.error ?? 'Gagal mengajukan pembayaran.');
           return;
         }
 
-        toast.success("Bukti pembayaran berhasil diajukan!");
+        toast.success('Bukti pembayaran berhasil diajukan!');
         setOpen(false);
-        setNote("");
-        // Refresh the page to show updated state
+        setNote('');
         window.location.reload();
       } catch {
-        toast.error("Terjadi kesalahan. Coba lagi.");
+        toast.error('Terjadi kesalahan. Coba lagi.');
       }
     });
   }
@@ -135,7 +134,7 @@ function SubmitProofDialog({
           <DialogHeader>
             <DialogTitle>Ajukan Pembayaran</DialogTitle>
             <DialogDescription>
-              Upload bukti pembayaran iuran {monthLabel} — Rp {amount.toLocaleString("id-ID")}
+              Upload bukti pembayaran iuran {monthLabel} — Rp {amount.toLocaleString('id-ID')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -177,7 +176,7 @@ function SubmitProofDialog({
             </Button>
             <Button type="submit" disabled={isPending}>
               <Upload className="mr-2 size-4" />
-              {isPending ? "Mengunggah…" : "Kirim Bukti"}
+              {isPending ? 'Mengunggah…' : 'Kirim Bukti'}
             </Button>
           </DialogFooter>
         </form>
@@ -186,67 +185,53 @@ function SubmitProofDialog({
   );
 }
 
-function ProofStatusDialog({
-  proof,
-  children,
-}: {
-  proof: ProofWithDetails;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  const isImage = /\.(jpe?g|png|webp|gif)$/i.test(proof.filePath ?? "");
+// Inline card untuk lihat bukti (bukan dialog)
+function ProofCard({ proof }: { proof: ProofWithDetails }) {
+  const [expanded, setExpanded] = useState(false);
+  const isImage = /\.(jpe?g|png|webp|gif)$/i.test(proof.filePath ?? '');
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Detail Bukti Pembayaran</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">File:</span>
-            <span className="truncate font-medium">{proof.fileName}</span>
-            <span className="text-muted-foreground">Status:</span>
-            <span>
-              <Badge variant={STATUS_LABELS[proof.status]?.variant ?? "outline"}>
-                {STATUS_LABELS[proof.status]?.label ?? proof.status}
-              </Badge>
-            </span>
-            <span className="text-muted-foreground">Diajukan:</span>
-            <span>{proof.createdAt.toLocaleDateString("id-ID", { dateStyle: "medium" })}</span>
-            {proof.rejectionReason && (
-              <>
-                <span className="text-muted-foreground">Alasan Penolakan:</span>
-                <span className="text-destructive">{proof.rejectionReason}</span>
-              </>
-            )}
-          </div>
+    <div className="space-y-1">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="truncate">{proof.fileName}</span>
+        <Badge variant={STATUS_LABELS[proof.status]?.variant ?? 'outline'}>
+          {STATUS_LABELS[proof.status]?.label ?? proof.status}
+        </Badge>
+        <Button variant="ghost" size="sm" className="h-6 px-1" onClick={() => setExpanded(!expanded)}>
+          <Eye className="size-3 mr-1" />
+          {expanded ? 'Tutup' : 'Lihat'}
+        </Button>
+      </div>
 
+      {expanded && (
+        <Card className="overflow-hidden border-muted">
           {isImage ? (
-            <div className="flex max-h-[55vh] items-start justify-center overflow-auto rounded-lg border bg-muted/40 p-2">
+            <div className="flex justify-center bg-muted/20 p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={proof.filePath}
-                alt={proof.fileName ?? "Bukti pembayaran"}
-                className="h-auto max-h-[50vh] w-full max-w-full rounded-md object-contain"
+                alt={proof.fileName ?? 'Bukti pembayaran'}
+                className="max-h-48 w-auto rounded-md object-contain"
               />
             </div>
           ) : null}
-
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" render={<a href={proof.filePath} target="_blank" rel="noopener noreferrer">Buka File</a>}>
-              <FileText className="mr-2 size-4" />
-            </Button>
-            {isImage && (
-              <Button variant="outline" size="sm" render={<a href={proof.filePath} download={proof.fileName}>Download Foto</a>}>
-                <Download className="mr-2 size-4" />
-              </Button>
+          <CardContent className="p-3 text-xs space-y-1">
+            <div><span className="text-muted-foreground">Status:</span> {STATUS_LABELS[proof.status]?.label ?? proof.status}</div>
+            <div><span className="text-muted-foreground">Diajukan:</span> {proof.createdAt.toLocaleDateString('id-ID', { dateStyle: 'medium' })}</div>
+            {proof.rejectionReason && (
+              <div><span className="text-muted-foreground">Alasan:</span> <span className="text-destructive">{proof.rejectionReason}</span></div>
             )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <div className="flex gap-2 pt-1">
+              {isImage && (
+                <Button variant="outline" size="sm" render={<a href={proof.filePath} download={proof.fileName}>Download</a>}>
+                  <Download className="mr-1 size-3" />
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
@@ -257,9 +242,6 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  // (Mayar payment section dinonaktifkan sementara — QRIS Coming Soon)
-
-  // Build the table with all dues
   const tableRows = rows.map((row) => {
     const dueStatus = getDueStatus(row, currentYear, currentMonth);
     const statusInfo = DUE_STATUS_LABELS[dueStatus];
@@ -268,26 +250,13 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
         <TableCell className="font-medium">
           {MONTH_LABELS[row.month - 1]} {row.year}
         </TableCell>
-        <TableCell>Rp {row.amount.toLocaleString("id-ID")}</TableCell>
+        <TableCell>Rp {row.amount.toLocaleString('id-ID')}</TableCell>
         <TableCell>
           <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
         </TableCell>
         <TableCell>
           {row.proof ? (
-            <div className="flex flex-col gap-1">
-              <Badge variant={STATUS_LABELS[row.proof.status]?.variant ?? "outline"}>
-                {STATUS_LABELS[row.proof.status]?.label ?? row.proof.status}
-              </Badge>
-              <span className="text-xs text-muted-foreground">{row.proof.fileName}</span>
-              <ProofStatusDialog proof={row.proof}>
-                <button
-                  type="button"
-                  className="text-xs text-primary hover:underline"
-                >
-                  Lihat Detail
-                </button>
-              </ProofStatusDialog>
-            </div>
+            <ProofCard proof={row.proof} />
           ) : row.isPaid ? (
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
               <CheckCircle className="size-3.5" />
@@ -312,7 +281,6 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
 
   return (
     <div className="max-w-3xl space-y-6">
-      {/* Pembayaran Online QRIS — Coming Soon (Mayar belum aktif) */}
       <MayarPaymentSection />
 
       {rows.length === 0 ? (
@@ -342,9 +310,9 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
                       <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                     </div>
                     <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="text-muted-foreground">Rp {row.amount.toLocaleString("id-ID")}</span>
+                      <span className="text-muted-foreground">Rp {row.amount.toLocaleString('id-ID')}</span>
                       {row.proof ? (
-                        <Badge variant={STATUS_LABELS[row.proof.status]?.variant ?? "outline"}>
+                        <Badge variant={STATUS_LABELS[row.proof.status]?.variant ?? 'outline'}>
                           {STATUS_LABELS[row.proof.status]?.label ?? row.proof.status}
                         </Badge>
                       ) : row.isPaid ? (
@@ -353,16 +321,7 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
                         </span>
                       ) : null}
                     </div>
-                    {row.proof && (
-                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                        <span className="truncate">{row.proof.fileName}</span>
-                        <ProofStatusDialog proof={row.proof}>
-                          <button type="button" className="shrink-0 text-xs text-primary hover:underline">
-                            Lihat Detail
-                          </button>
-                        </ProofStatusDialog>
-                      </div>
-                    )}
+                    {row.proof && <ProofCard proof={row.proof} />}
                     {!row.isPaid && !row.proof && (
                       <SubmitProofDialog
                         dueId={row.id}

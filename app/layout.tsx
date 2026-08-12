@@ -18,15 +18,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Barcelona Cove", template: "%s — Barcelona Cove" },
+  title: { default: "Barcelona Cove Portal", template: "%s — Barcelona Cove Portal" },
   description: "Portal warga cluster Barcelona Cove",
   manifest: "/manifest.json",
+  appleWebApp: {
+    title: "Barcelona Cove Portal",
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
   icons: {
     icon: [
+      { url: "/icons/icon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/icon-72.png", sizes: "72x72", type: "image/png" },
+      { url: "/icons/icon-96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icons/icon-128.png", sizes: "128x128", type: "image/png" },
+      { url: "/icons/icon-144.png", sizes: "144x144", type: "image/png" },
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-256.png", sizes: "256x256", type: "image/png" },
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icons/apple-touch-icon-180.png", sizes: "180x180", type: "image/png" }],
+    apple: [
+      { url: "/icons/icon-apple-touch-icon-180.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
