@@ -87,8 +87,8 @@ export default function PerlintasanKeretaStatus() {
     ? `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/12/${ Math.floor((data.point.lon + 180) / 360 * 4096)}/${ Math.floor((1 - Math.log(Math.tan(data.point.lat * Math.PI / 180) + 1 / Math.cos(data.point.lat * Math.PI / 180)) / Math.PI) / 2 * 4096)}/256.png?key=${process.env.NEXT_PUBLIC_TOMTOM_KEY || ''}&thickness=2`
     : null;
 
-  // Alternatif: pakai static map dengan marker
-  const staticMapUrl = `https://api.tomtom.com/map/1/staticimage?key=Bfe5LFWFhJzLBCBek0KyFSHt2UBFUvYj&zoom=15&center=107.1010,-6.2590&format=jpg&layer=basic&style=night&width=600&height=200`;
+  // Peta statis horizontal (lebar × kecil) dari TomTom
+  const staticMapUrl = `https://api.tomtom.com/map/1/staticimage?key=Bfe5LFWFhJzLBCBek0KyFSHt2UBFUvYj&zoom=16&center=107.1010,-6.2590&format=jpg&layer=basic&style=night&width=800&height=120`;
 
   if (failed) return null;
 
@@ -105,7 +105,7 @@ export default function PerlintasanKeretaStatus() {
               <div className="h-3 w-48 animate-pulse rounded bg-muted" />
             </div>
           </div>
-          <div className="h-32 w-full animate-pulse rounded-lg bg-muted" />
+          <div className="h-20 w-full animate-pulse rounded-lg bg-muted" />
         </CardContent>
       </Card>
     );
@@ -147,7 +147,7 @@ export default function PerlintasanKeretaStatus() {
           <img
             src={staticMapUrl}
             alt="Peta perlintasan kereta"
-            className="w-full h-32 object-cover"
+            className="w-full h-20 object-cover"
             loading="lazy"
           />
           {/* Overlay status */}
