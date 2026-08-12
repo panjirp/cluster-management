@@ -66,12 +66,12 @@ export default function LoginPage() {
       <div className="relative z-10 flex w-full max-w-sm flex-col gap-5">
         {/* Brand / logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-white/95 p-2 shadow-[0_0_40px_-8px_rgba(171,246,0,0.55)] ring-1 ring-white/10">
+          <div className="grid size-16 place-items-center overflow-hidden rounded-2xl shadow-[0_0_40px_-8px_rgba(171,246,0,0.55)] ring-1 ring-white/10">
             <Image
-              src="/bc.png"
+              src="/icons/icon-512.png"
               alt="Logo Barcelona Cove"
-              width={742}
-              height={465}
+              width={512}
+              height={512}
               priority
               className="h-full w-full object-contain"
             />
