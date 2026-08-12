@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { sendPushToUsers } from "@/lib/web-push";
 
 const bodySchema = z.object({
   id: z.string(),
@@ -23,16 +24,41 @@ export async function POST(request: NextRequest) {
 
   const { id, isPaid, months: totalMonths = 1 } = body.data;
 
-  const due = await prisma.monthlyDue.findUnique({ where: { id } });
+  const due = await prisma.monthlyDue.findUnique({
+    where: { id },
+    include: { house: { select: { id: true, blockNumber: true, residents: { select: { id: true } } } } },
+  });
   if (!due) {
     return NextResponse.json({ error: "Data iuran tidak ditemukan" }, { status: 404 });
   }
+
+  // Kumpulkan userId rumah untuk push notif
+  const residentIds = due.house.residents.map((r) => r.id);
+
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
   if (totalMonths === 1) {
     await prisma.monthlyDue.update({
       where: { id },
       data: { isPaid, paidAt: isPaid ? new Date() : null },
     });
+
+    // Push notifikasi
+    const label = `${MONTHS[due.month - 1]} ${due.year}`;
+    if (isPaid && residentIds.length > 0) {
+      await sendPushToUsers(residentIds, {
+        title: "Iuran Disetujui",
+        body: `Pembayaran iuran ${label} untuk rumah ${due.house.blockNumber} telah disetujui.`,
+        url: "/cash/dues/proof-submit",
+      }).catch(() => {});
+    } else if (!isPaid && residentIds.length > 0) {
+      await sendPushToUsers(residentIds, {
+        title: "Iuran Dibatalkan",
+        body: `Status lunas iuran ${label} untuk rumah ${due.house.blockNumber} telah dibatalkan.`,
+        url: "/cash/dues/proof-submit",
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ success: true, affected: 1 });
   }
 
@@ -67,6 +93,15 @@ export async function POST(request: NextRequest) {
 
     m++;
     if (m > 12) { m = 1; y++; }
+  }
+
+  // Push notifikasi untuk multi-bulan
+  if (isPaid && residentIds.length > 0) {
+    await sendPushToUsers(residentIds, {
+      title: "Iuran Disetujui",
+      body: `${affected} bulan iuran untuk rumah ${due.house.blockNumber} telah disetujui.`,
+      url: "/cash/dues/proof-submit",
+    }).catch(() => {});
   }
 
   return NextResponse.json({

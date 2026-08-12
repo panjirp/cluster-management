@@ -92,7 +92,7 @@ export default async function AdminPosyanduPage() {
       </div>
 
       <AdminPosyanduTabs
-        children={serializedChildren}
+        childrenList={serializedChildren}
         schedules={serializedSchedules}
         recentCheckups={serializedCheckups}
       />

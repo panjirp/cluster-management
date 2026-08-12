@@ -35,6 +35,7 @@ export const mainNavItems: NavItem[] = [
   { href: "/permits", label: "Perizinan", icon: FileCheck2 },
   { href: "/cash", label: "Uang Kas", icon: Wallet },
   { href: "/cash/dues/proof-submit", label: "Pembayaran Kas", icon: Upload },
+  { href: "/posyandu", label: "Posyandu", icon: Stethoscope },
   { href: "/map", label: "Peta Klaster", icon: Map },
   { href: "/cctv", label: "CCTV", icon: Video },
   { href: "/facilities", label: "Fasilitas", icon: Landmark },
@@ -49,7 +50,6 @@ export const mainNavItems: NavItem[] = [
   { href: "/letters", label: "Surat Edaran", icon: FileText },
   { href: "/notifications", label: "Notifikasi", icon: Bell },
   { href: "/emergency", label: "Darurat", icon: Siren },
-  { href: "/posyandu", label: "Posyandu", icon: Stethoscope },
 ];
 
 export const bendaharaNavItems: NavItem[] = [

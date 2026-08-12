@@ -149,16 +149,16 @@ function nutritionalLabel(val: string | null): string {
 // ── Main Component ────────────────────────────────────────────────────
 
 export function AdminPosyanduTabs({
-  children,
+  childrenList: initialChildren,
   schedules,
   recentCheckups,
 }: {
-  children: SerializedChild[];
+  childrenList: SerializedChild[];
   schedules: SerializedSchedule[];
   recentCheckups: SerializedCheckup[];
 }) {
   const [tab, setTab] = useState("anak");
-  const [childrenList, setChildrenList] = useState(children);
+  const [childrenList, setChildrenList] = useState(initialChildren);
   const [schedulesList, setSchedulesList] = useState(schedules);
   const [checkupsList, setCheckupsList] = useState(recentCheckups);
 
@@ -304,7 +304,7 @@ export function AdminPosyanduTabs({
   // ── Tab: Pemeriksaan — Form Input + Riwayat ───────────────────────
 
   function CheckupForm() {
-    const [selectedChildId, setSelectedChildId] = useState("");
+    const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
     const [scheduleId, setScheduleId] = useState("");
     const [checkupDate, setCheckupDate] = useState(
       new Date().toISOString().slice(0, 10)
@@ -375,7 +375,7 @@ export function AdminPosyanduTabs({
         toast.success("Hasil pemeriksaan berhasil disimpan");
 
         // Reset form
-        setSelectedChildId("");
+        setSelectedChildId(null);
         setScheduleId("");
         setCheckupDate(new Date().toISOString().slice(0, 10));
         setWeight("");
@@ -400,18 +400,23 @@ export function AdminPosyanduTabs({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="checkup-child">Nama Anak</Label>
-                <Select value={selectedChildId} onValueChange={(v) => setSelectedChildId(v ?? "")}>
-                  <SelectTrigger id="checkup-child" className="w-full">
-                    <SelectValue placeholder="— Pilih Anak —" />
-                  </SelectTrigger>
-                  <SelectContent>
+                {childrenList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">Belum ada anak terdaftar</p>
+                ) : (
+                  <select
+                    id="checkup-child"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={selectedChildId ?? ""}
+                    onChange={(e) => setSelectedChildId(e.target.value || null)}
+                  >
+                    <option value="">— Pilih Anak —</option>
                     {childrenList.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+                      <option key={c.id} value={c.id}>
                         {c.name} ({calcAge(c.birthDate)})
-                      </SelectItem>
+                      </option>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="checkup-date">Tanggal Periksa</Label>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { sendPushToUsers } from "@/lib/web-push";
 
 // GET /api/posyandu/checkups?childId=xxx
 export async function GET(request: NextRequest) {
@@ -70,9 +71,22 @@ export async function POST(request: NextRequest) {
       recordedById: session.user.id,
     },
     include: {
-      child: { select: { name: true } },
+      child: { select: { name: true, userId: true } },
     },
   });
+
+  // Push notifikasi ke orang tua
+  if (checkup.child.userId) {
+    const childName = checkup.child.name;
+    const immunText = (body.data.immunizationGiven ?? []).length > 0
+      ? ` Imunisasi: ${(body.data.immunizationGiven ?? []).join(", ")}.`
+      : "";
+    await sendPushToUsers([checkup.child.userId], {
+      title: `Hasil Posyandu ${childName}`,
+      body: `Pemeriksaan ${childName} telah dicatat. BB: ${body.data.weight ?? "-"} kg, TB: ${body.data.height ?? "-"} cm.${immunText}`,
+      url: `/posyandu/${body.data.childId}`,
+    }).catch(() => {});
+  }
 
   return NextResponse.json(checkup, { status: 201 });
 }
