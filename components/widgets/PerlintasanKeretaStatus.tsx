@@ -1,20 +1,38 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Clock, AlertTriangle, CheckCircle, Loader2, MapPin, Car } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, Loader2, MapPin, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
-interface TrafficData {
-  status: 'lancar' | 'sedang' | 'macet';
+interface ArahTraffic {
+  dari: string;
+  ke: string;
   currentSpeed: number;
   freeFlowSpeed: number;
-  confidence: number;
-  roadClosure: boolean;
-  ratio: number;
-  coordinates: { latitude: number; longitude: number }[];
-  point: { lat: number; lon: number };
-  roadName: string;
+  status: 'lancar' | 'sedang' | 'macet';
+}
+
+interface TrafficData {
+  overallStatus: 'lancar' | 'sedang' | 'macet';
+  arah1: ArahTraffic;
+  arah2: ArahTraffic;
   updatedAt: string;
+}
+
+function StatusBadge({ status }: { status: 'lancar' | 'sedang' | 'macet' }) {
+  const config = {
+    lancar: { icon: CheckCircle, color: 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950/30', label: 'Lancar' },
+    sedang: { icon: Clock, color: 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/30', label: 'Padat' },
+    macet: { icon: AlertTriangle, color: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-950/30', label: 'Macet' },
+  };
+  const c = config[status];
+  const Icon = c.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${c.color}`}>
+      <Icon className="size-3.5" />
+      {c.label}
+    </span>
+  );
 }
 
 export default function PerlintasanKeretaStatus() {
@@ -43,69 +61,21 @@ export default function PerlintasanKeretaStatus() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRefresh = () => fetchTraffic();
-
-  const getStatusColor = () => {
-    if (!data) return 'text-muted-foreground bg-muted';
-    switch (data.status) {
-      case 'macet':
-        return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-950/30';
-      case 'sedang':
-        return 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/30';
-      default:
-        return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950/30';
-    }
-  };
-
-  const getStatusIcon = () => {
-    if (!data) return <MapPin className="w-5 h-5" />;
-    switch (data.status) {
-      case 'macet':
-        return <AlertTriangle className="w-5 h-5" />;
-      case 'sedang':
-        return <Clock className="w-5 h-5" />;
-      default:
-        return <CheckCircle className="w-5 h-5" />;
-    }
-  };
-
-  const getStatusText = () => {
-    if (!data) return 'Memuat...';
-    if (data.roadClosure) return 'Jalan Tutup';
-    switch (data.status) {
-      case 'macet':
-        return 'Macet';
-      case 'sedang':
-        return 'Padat Merayap';
-      default:
-        return 'Lancar';
-    }
-  };
-
-  // TomTom map URL — embed peta dengan traffic layer
-  const mapUrl = data
-    ? `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/12/${ Math.floor((data.point.lon + 180) / 360 * 4096)}/${ Math.floor((1 - Math.log(Math.tan(data.point.lat * Math.PI / 180) + 1 / Math.cos(data.point.lat * Math.PI / 180)) / Math.PI) / 2 * 4096)}/256.png?key=${process.env.NEXT_PUBLIC_TOMTOM_KEY || ''}&thickness=2`
-    : null;
-
-  // Peta statis horizontal (lebar × kecil) dari TomTom
-  const staticMapUrl = `https://api.tomtom.com/map/1/staticimage?key=Bfe5LFWFhJzLBCBek0KyFSHt2UBFUvYj&zoom=12&center=107.1010,-6.2590&format=jpg&layer=basic&style=night&width=400&height=100`;
-
   if (failed) return null;
 
   if (!data) {
     return (
       <Card className="overflow-hidden">
         <CardContent className="space-y-3 py-4">
-          <div className="flex items-center gap-3.5">
-            <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-sky-500/15 ring-1 ring-inset ring-sky-500/20">
-              <MapPin className="size-6 text-sky-500 dark:text-sky-400 animate-pulse" />
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-500/15 ring-1 ring-inset ring-sky-500/20">
+              <MapPin className="size-5 text-sky-500 animate-pulse" />
             </div>
             <div className="space-y-2">
-              <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-              <div className="h-3 w-48 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-40 animate-pulse rounded bg-muted" />
             </div>
           </div>
-          <div className="h-20 w-full animate-pulse rounded-lg bg-muted" />
         </CardContent>
       </Card>
     );
@@ -117,65 +87,68 @@ export default function PerlintasanKeretaStatus() {
     <Card className="overflow-hidden">
       <CardContent className="space-y-3 py-4">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-sky-500/15 ring-1 ring-inset ring-sky-500/20">
-              <MapPin className="size-6 text-sky-500 dark:text-sky-400" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-500/15 ring-1 ring-inset ring-sky-500/20">
+              <MapPin className="size-5 text-sky-500 dark:text-sky-400" />
             </div>
             <div>
-              <p className="flex items-center gap-1.5 text-lg font-bold tabular-nums">
-                Perlintasan Kereta
-                <span className="text-sm font-medium text-muted-foreground">· {data.roadName}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Status lalu lintas dekat cluster
-                <span className="inline-flex items-center gap-1 ml-1" title="Data diperbarui otomatis">
-                  · <Clock className="size-3" /> {updatedTime}
-                </span>
-              </p>
+              <p className="text-sm font-semibold">Lalu Lintas</p>
+              <p className="text-xs text-muted-foreground">Daifuku ↔ Jl. Telaga Asih</p>
+            </div>
+          </div>
+          <StatusBadge status={data.overallStatus} />
+        </div>
+
+        {/* Dua arah traffic */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Arah 1 */}
+          <div className="rounded-lg border p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{data.arah1.dari}</span>
+              <ArrowRight className="size-3" />
+              <span className="font-medium text-foreground">{data.arah1.ke}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold tabular-nums">{data.arah1.currentSpeed}</span>
+              <span className="text-xs text-muted-foreground">km/j</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Normal {data.arah1.freeFlowSpeed} km/j</span>
+              <StatusBadge status={data.arah1.status} />
             </div>
           </div>
 
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${getStatusColor()}`}>
-            {getStatusIcon()}
-            <span>{getStatusText()}</span>
-          </div>
-        </div>
-
-        {/* Peta statis dari TomTom */}
-        <div className="relative w-full overflow-hidden rounded-lg border border-border">
-          <img
-            src={staticMapUrl}
-            alt="Peta perlintasan kereta"
-            className="w-full h-24 object-cover"
-            loading="lazy"
-          />
-          {/* Overlay status */}
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1.5">
-            <Car className="size-3.5 text-white" />
-            <span className="text-xs font-medium text-white">
-              {data.currentSpeed} km/j
-            </span>
-            <span className="text-xs text-white/60">/ {data.freeFlowSpeed} km/j normal</span>
+          {/* Arah 2 */}
+          <div className="rounded-lg border p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{data.arah2.dari}</span>
+              <ArrowRight className="size-3" />
+              <span className="font-medium text-foreground">{data.arah2.ke}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold tabular-nums">{data.arah2.currentSpeed}</span>
+              <span className="text-xs text-muted-foreground">km/j</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Normal {data.arah2.freeFlowSpeed} km/j</span>
+              <StatusBadge status={data.arah2.status} />
+            </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Kecepatan: {data.currentSpeed} km/j · Normal: {data.freeFlowSpeed} km/j
+            Refresh otomatis 5 menit · <span className="inline-flex items-center gap-1"><Clock className="size-3" /> {updatedTime}</span>
           </p>
           <button
-            onClick={handleRefresh}
+            onClick={fetchTraffic}
             disabled={loading}
             className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
-            title="Refresh status"
+            title="Refresh"
           >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-            ) : (
-              <Clock className="size-4 text-muted-foreground" />
-            )}
+            <Loader2 className={`size-4 ${loading ? 'animate-spin' : ''} text-muted-foreground`} />
           </button>
         </div>
       </CardContent>
