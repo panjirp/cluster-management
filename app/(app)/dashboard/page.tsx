@@ -22,6 +22,7 @@ import { computeTotals } from "@/lib/cash";
 import GroupChat from "@/components/chat/group-chat";
 import { WeatherWidget } from "@/components/dashboard/weather-widget";
 import PerlintasanKeretaStatus from "@/components/widgets/PerlintasanKeretaStatus";
+import KrlScheduleWidget from "@/components/widgets/KrlScheduleWidget";
 
 const activityActionLabels: Record<string, string> = {
   UPDATE_COMPLAINT_STATUS: "Pengaduan",
@@ -135,6 +136,7 @@ export default async function DashboardPage() {
         <DashboardHeader name={session.user.name ?? "Warga"} />
         <WeatherWidget />
         <PerlintasanKeretaStatus />
+        <KrlScheduleWidget />
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
@@ -235,6 +237,7 @@ export default async function DashboardPage() {
         <DashboardHeader name={session.user.name ?? "Admin"} />
         <WeatherWidget />
         <PerlintasanKeretaStatus />
+        <KrlScheduleWidget />
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
@@ -318,6 +321,7 @@ export default async function DashboardPage() {
       <DashboardHeader name={session.user.name ?? "Bendahara"} />
       <WeatherWidget />
       <PerlintasanKeretaStatus />
+      <KrlScheduleWidget />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard

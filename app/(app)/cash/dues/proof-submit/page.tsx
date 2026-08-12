@@ -29,7 +29,8 @@ function generateMonthRange(startYear: number, startMonth: number) {
       y++;
     }
   }
-  return months;
+  // URUTAN: tahun kecil di bawah → tahun besar di atas (reverse)
+  return months.reverse();
 }
 
 export default async function ProofSubmitPage() {
@@ -89,6 +90,7 @@ export default async function ProofSubmitPage() {
     const startMonth = firstDue.month;
 
     const allMonths = generateMonthRange(startYear, startMonth);
+    // allMonths sekarang: bulan sekarang di index 0, bulan pertama di index terakhir
 
     const dueMap = new Map<string, (typeof existingDues)[0]>();
     for (const d of existingDues) {
@@ -108,6 +110,7 @@ export default async function ProofSubmitPage() {
           mayarInvoiceId: existing.mayarInvoiceId,
         };
       } else {
+        // Bulan ini belum ada record = belum serah terima
         return {
           id: `placeholder-${year}-${month}`,
           year,
@@ -117,6 +120,7 @@ export default async function ProofSubmitPage() {
           proof: null,
           mayarInvoiceId: null,
           isPlaceholder: true,
+          label: "Menunggak",
         };
       }
     });
