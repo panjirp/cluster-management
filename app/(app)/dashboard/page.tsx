@@ -7,7 +7,6 @@ import {
   Users,
   PlusCircle,
   CalendarClock,
-  CalendarDays,
   History,
   ArrowUpRight,
   LayoutDashboard,
@@ -22,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { computeTotals } from "@/lib/cash";
 import GroupChat from "@/components/chat/group-chat";
 import { WeatherWidget } from "@/components/dashboard/weather-widget";
+import PerlintasanKeretaStatus from "@/components/widgets/PerlintasanKeretaStatus";
 
 const activityActionLabels: Record<string, string> = {
   UPDATE_COMPLAINT_STATUS: "Pengaduan",
@@ -100,111 +100,9 @@ function DashboardHeader({ name }: { name: string }) {
               Portal Cluster
             </p>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Selamat datang, {name.split(" ")[0]}</h1>
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Selamat datang, <span className="font-semibold text-foreground">{name}</span> 👋
-      </p>
-    </div>
-  );
-}
-
-function SectionHeader({
-  title,
-  href,
-  linkLabel,
-  icon: Icon,
-}: {
-  title: string;
-  href: string;
-  linkLabel: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
-        <Icon className="size-4 text-primary" />
-        {title}
-      </h2>
-      <Link
-        href={href}
-        className="group flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
-      >
-        {linkLabel}
-        <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-      </Link>
-    </div>
-  );
-}
-
-function formatEventTime(date: Date) {
-  return new Intl.DateTimeFormat("id-ID", { timeStyle: "short" }).format(date);
-}
-
-async function getUpcomingEvents() {
-  const events = await prisma.event.findMany({
-    where: { eventDate: { gte: new Date() } },
-    orderBy: { eventDate: "asc" },
-    take: 3,
-    include: { rsvps: { where: { status: "GOING" } } },
-  });
-  return events.map((e) => ({
-    id: e.id,
-    title: e.title,
-    location: e.location,
-    eventDate: e.eventDate,
-    goingCount: e.rsvps.length,
-  }));
-}
-
-function UpcomingEventsSection({ events }: { events: Awaited<ReturnType<typeof getUpcomingEvents>> }) {
-  const dayFormatter = new Intl.DateTimeFormat("id-ID", { day: "2-digit" });
-  const monthFormatter = new Intl.DateTimeFormat("id-ID", { month: "short" });
-
-  return (
-    <div className="space-y-3">
-      <SectionHeader title="Acara Mendatang" href="/events" linkLabel="Lihat semua" icon={CalendarDays} />
-      {events.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-sm text-muted-foreground">Belum ada acara mendatang.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {events.map((event) => (
-            <Link key={event.id} href={`/events/${event.id}`} className="group block">
-              <Card className="transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-[0_8px_30px_-14px_color-mix(in_oklab,var(--primary)_40%,transparent)]">
-                <CardContent className="flex items-center justify-between gap-3 py-3.5">
-                  <div className="flex min-w-0 items-center gap-3.5">
-                    <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary/10 ring-1 ring-inset ring-primary/20">
-                      <div className="text-center leading-none">
-                        <p className="text-base font-bold text-primary">{dayFormatter.format(event.eventDate)}</p>
-                        <p className="mt-0.5 text-[9px] font-semibold tracking-wide text-muted-foreground uppercase">
-                          {monthFormatter.format(event.eventDate)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="min-w-0 space-y-0.5">
-                      <p className="truncate text-sm font-semibold transition-colors group-hover:text-primary">
-                        {event.title}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        Pukul {formatEventTime(event.eventDate)}
-                        {event.location ? ` · ${event.location}` : ""}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="shrink-0">
-                    {event.goingCount} Hadir
-                  </Badge>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -214,10 +112,9 @@ export default async function DashboardPage() {
   const { role, id: userId } = session.user;
 
   if (role === "WARGA") {
-    // Fitur kas/iuran: nonaktif sementara untuk warga (aktif kembali jika diminta)
     const duesEnabled = false;
     const now = new Date();
-    const [openComplaints, pendingPermits, due, upcomingEvents] = await Promise.all([
+    const [openComplaints, pendingPermits, due] = await Promise.all([
       prisma.complaint.count({ where: { createdById: userId, status: { not: "RESOLVED" } } }),
       prisma.permit.count({ where: { createdById: userId, status: "PENDING" } }),
       session.user.houseId
@@ -231,14 +128,13 @@ export default async function DashboardPage() {
             },
           })
         : null,
-      getUpcomingEvents(),
     ]);
 
     return (
       <div className="space-y-6">
         <DashboardHeader name={session.user.name ?? "Warga"} />
         <WeatherWidget />
-        <UpcomingEventsSection events={upcomingEvents} />
+        <PerlintasanKeretaStatus />
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
@@ -328,18 +224,17 @@ export default async function DashboardPage() {
   }
 
   if (role === "ADMIN") {
-    const [openComplaints, pendingPermits, recentActivity, upcomingEvents] = await Promise.all([
+    const [openComplaints, pendingPermits, recentActivity] = await Promise.all([
       prisma.complaint.count({ where: { status: { not: "RESOLVED" } } }),
       prisma.permit.count({ where: { status: "PENDING" } }),
       prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
-      getUpcomingEvents(),
     ]);
 
     return (
       <div className="space-y-6">
         <DashboardHeader name={session.user.name ?? "Admin"} />
         <WeatherWidget />
-        <UpcomingEventsSection events={upcomingEvents} />
+        <PerlintasanKeretaStatus />
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
@@ -366,7 +261,15 @@ export default async function DashboardPage() {
         </div>
 
         <div className="space-y-3">
-          <SectionHeader title="Aktivitas Terbaru" href="/admin/activity-log" linkLabel="Lihat semua" icon={History} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History className="size-5 text-primary" />
+              <h2 className="font-semibold tracking-tight">Aktivitas Terbaru</h2>
+            </div>
+            <Link href="/admin/activity-log" className="text-sm text-primary hover:underline flex items-center gap-1">
+              Lihat semua <ArrowUpRight className="size-3.5" />
+            </Link>
+          </div>
           {recentActivity.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center">
@@ -402,12 +305,11 @@ export default async function DashboardPage() {
 
   // BENDAHARA
   const now = new Date();
-  const [transactions, unpaidDues, upcomingEvents] = await Promise.all([
+  const [transactions, unpaidDues] = await Promise.all([
     prisma.cashTransaction.findMany(),
     prisma.monthlyDue.count({
       where: { year: now.getFullYear(), month: now.getMonth() + 1, isPaid: false },
     }),
-    getUpcomingEvents(),
   ]);
   const totals = computeTotals(transactions);
 
@@ -415,7 +317,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <DashboardHeader name={session.user.name ?? "Bendahara"} />
       <WeatherWidget />
-      <UpcomingEventsSection events={upcomingEvents} />
+      <PerlintasanKeretaStatus />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard

@@ -4,18 +4,38 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { ProofSubmitClient } from "./proof-submit-client";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Pengajuan Pembayaran Iuran",
   description: "Upload bukti pembayaran iuran bulanan",
 };
 
+/** Generate array bulan dari startYear/startMonth sampai sekarang */
+function generateMonthRange(startYear: number, startMonth: number) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  const months: { year: number; month: number }[] = [];
+  let y = startYear;
+  let m = startMonth;
+
+  while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+    months.push({ year: y, month: m });
+    m++;
+    if (m > 12) {
+      m = 1;
+      y++;
+    }
+  }
+  return months;
+}
+
 export default async function ProofSubmitPage() {
   const session = await requireUser();
 
   const role: string = session.user.role;
-  // Halaman ini khusus warga — pengurus diarahkan ke review bukti
   if (role !== "WARGA") {
     redirect("/cash/dues");
   }
@@ -37,9 +57,10 @@ export default async function ProofSubmitPage() {
     );
   }
 
-  const dues = await prisma.monthlyDue.findMany({
+  // Ambil semua record iuran rumah ini
+  const existingDues = await prisma.monthlyDue.findMany({
     where: { houseId },
-    orderBy: [{ year: "desc" }, { month: "desc" }],
+    orderBy: [{ year: "asc" }, { month: "asc" }],
     include: {
       paymentProofs: {
         orderBy: { createdAt: "desc" },
@@ -56,17 +77,81 @@ export default async function ProofSubmitPage() {
     },
   });
 
+  const neverPaid = existingDues.length === 0;
+
+  let displayDues: any[] = [];
+
+  if (neverPaid) {
+    displayDues = [];
+  } else {
+    const firstDue = existingDues[0];
+    const startYear = firstDue.year;
+    const startMonth = firstDue.month;
+
+    const allMonths = generateMonthRange(startYear, startMonth);
+
+    const dueMap = new Map<string, (typeof existingDues)[0]>();
+    for (const d of existingDues) {
+      dueMap.set(`${d.year}-${d.month}`, d);
+    }
+
+    displayDues = allMonths.map(({ year, month }) => {
+      const existing = dueMap.get(`${year}-${month}`);
+      if (existing) {
+        return {
+          id: existing.id,
+          year: existing.year,
+          month: existing.month,
+          amount: existing.amount,
+          isPaid: existing.isPaid,
+          proof: existing.paymentProofs[0] ?? null,
+          mayarInvoiceId: existing.mayarInvoiceId,
+        };
+      } else {
+        return {
+          id: `placeholder-${year}-${month}`,
+          year,
+          month,
+          amount: 0,
+          isPaid: false,
+          proof: null,
+          mayarInvoiceId: null,
+          isPlaceholder: true,
+        };
+      }
+    });
+  }
+
   return (
-    <ProofSubmitClient
-      initialDues={dues.map((due) => ({
-        id: due.id,
-        year: due.year,
-        month: due.month,
-        amount: due.amount,
-        isPaid: due.isPaid,
-        proof: due.paymentProofs[0] ?? null,
-        mayarInvoiceId: due.mayarInvoiceId,
-      }))}
-    />
+    <div className="max-w-3xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Pengajuan Pembayaran Iuran</h1>
+        <p className="text-sm text-muted-foreground">
+          {neverPaid
+            ? "Anda belum pernah membayar iuran. Bulan pertama yang Anda bayar akan dihitung sampai sekarang."
+            : "Upload bukti pembayaran iuran bulanan"}
+        </p>
+      </div>
+
+      {neverPaid && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <Badge className="bg-amber-500 text-white mt-0.5">Info</Badge>
+              <div className="text-sm">
+                <p className="font-medium text-amber-900 dark:text-amber-200">Belum Pernah Bayar</p>
+                <p className="text-amber-700 dark:text-amber-300 mt-1">
+                  Rumah Anda belum pernah memiliki catatan iuran. Saat Anda mengajukan pembayaran pertama kali, bulan yang dipilih akan menjadi bulan mulai bayar dan akan dihitung sampai sekarang.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <ProofSubmitClient
+        initialDues={displayDues}
+      />
+    </div>
   );
 }
