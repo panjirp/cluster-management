@@ -123,6 +123,10 @@ model User {
   polls              Poll[]
   pollVotes          PollVote[]
   galleryPhotos      GalleryPhoto[]
+  children           Child[]
+  verifiedChildren   Child[]        @relation("VerifiedChildren")
+  posyanduSchedules   PosyanduSchedule[]
+  childCheckups      ChildCheckup[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 }
@@ -505,4 +509,71 @@ model GalleryPhoto {
   createdAt    DateTime @default(now())
 
   @@index([eventId])
+}
+
+// ── Posyandu Anak ──
+
+model Child {
+  id            String   @id @default(cuid())
+  userId        String
+  parent        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  birthDate     DateTime
+  gender        String   // LAKI_LAKI or PEREMPUAN
+  birthWeight   Float?   // kg
+  birthLength   Float?   // cm
+  nik           String?
+  allergies     String?
+  photoUrl      String?
+  isVerified    Boolean  @default(false)
+  verifiedBy    User?    @relation("VerifiedChildren", fields: [verifiedById], references: [id])
+  verifiedById  String?
+  createdAt     DateTime @default(now())
+
+  checkups      ChildCheckup[]
+
+  @@index([userId])
+  @@index([verifiedById])
+}
+
+model PosyanduSchedule {
+  id        String   @id @default(cuid())
+  date      DateTime
+  time      String   // HH:mm
+  location  String   @default("Posko Barcelona Cove")
+  notes     String?
+  createdBy User     @relation(fields: [createdById], references: [id])
+  createdById String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  checkups  ChildCheckup[]
+
+  @@index([date])
+}
+
+model ChildCheckup {
+  id                  String   @id @default(cuid())
+  child               Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId             String
+  schedule            PosyanduSchedule? @relation(fields: [scheduleId], references: [id])
+  scheduleId          String?
+  date                DateTime @default(now())
+
+  weight              Float?   // kg
+  height              Float?   // cm
+  headCircumference   Float?   // cm
+
+  nutritionalStatus   String?  // GIZI_BAIK, GIZI_KURANG, GIZI_BURUK, GIZI_LEBIH
+  immunizationGiven   String[] // array vaksin diberikan: ["BCG","POLIO_1",...]
+  vitaminA            Boolean? // true = ya
+  notes               String?
+
+  recordedBy          User     @relation(fields: [recordedById], references: [id])
+  recordedById        String
+  createdAt           DateTime @default(now())
+
+  @@index([childId])
+  @@index([scheduleId])
+  @@index([date])
 }

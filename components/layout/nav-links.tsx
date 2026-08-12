@@ -69,6 +69,14 @@ export function NavLinks({
       ? { href: "/admin/payment-proofs", label: "Pembayaran Kas", icon: Upload }
       : { href: "/cash/dues/proof-submit", label: "Pembayaran Kas", icon: Upload };
 
+  // Posyandu: ADMIN/BENDAHARA diarahkan ke /admin/posyandu, WARGA ke /posyandu
+  const resolvePosyanduHref = (item: NavItem): string => {
+    if (item.href === "/posyandu" && (role === "ADMIN" || role === "BENDAHARA")) {
+      return "/admin/posyandu";
+    }
+    return item.href;
+  };
+
   return (
     <>
       {mainNavItems.map((item) => {
@@ -81,6 +89,19 @@ export function NavLinks({
           if (item.href === "/cash/dues/proof-submit") {
             return <NavLink key="warga-proof" item={paymentNavItem} active={isActive("/cash/dues/proof-submit")} onNavigate={onNavigate} />;
           }
+        }
+        // Untuk ADMIN/BENDAHARA, redirect posyandu ke /admin/posyandu
+        if ((role === "ADMIN" || role === "BENDAHARA") && item.href === "/posyandu") {
+          const adminItem: NavItem = { href: "/admin/posyandu", label: "Posyandu", icon: item.icon };
+          return (
+            <NavLink
+              key="admin-posyandu"
+              item={adminItem}
+              active={isActive("/admin/posyandu")}
+              badgeCount={badges?.["/admin/posyandu"]}
+              onNavigate={onNavigate}
+            />
+          );
         }
         const resolved = item.href === "/cash/dues/proof-submit" ? paymentNavItem : item;
         return (

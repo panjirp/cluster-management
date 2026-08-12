@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Barcelona Cove Portal</string>
-    <string name="title_activity_main">Barcelona Cove Portal</string>
+    <string name="app_name">Barcelona Cove</string>
+    <string name="title_activity_main">Barcelona Cove</string>
     <string name="package_name">id.barcelonacove.app</string>
     <string name="custom_url_scheme">id.barcelonacove.app</string>
 </resources>

@@ -22,6 +22,7 @@ import {
   // QrCode, Package — COMING SOON (nav disembunyikan, lihat catatan di bawah)
   Vote,
   Images,
+  Stethoscope,
   type LucideIcon,
 } from "lucide-react";
 
@@ -48,6 +49,7 @@ export const mainNavItems: NavItem[] = [
   { href: "/letters", label: "Surat Edaran", icon: FileText },
   { href: "/notifications", label: "Notifikasi", icon: Bell },
   { href: "/emergency", label: "Darurat", icon: Siren },
+  { href: "/posyandu", label: "Posyandu", icon: Stethoscope },
 ];
 
 export const bendaharaNavItems: NavItem[] = [
@@ -64,4 +66,5 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/map-editor", label: "Editor Posisi Peta", icon: MapPin },
   { href: "/admin/activity-log", label: "Log Aktivitas", icon: History },
   { href: "/admin/payment-proofs", label: "Review Bukti", icon: FileCheck2 },
+  { href: "/admin/posyandu", label: "Posyandu", icon: Stethoscope },
 ];
