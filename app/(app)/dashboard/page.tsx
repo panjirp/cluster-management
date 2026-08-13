@@ -7,6 +7,7 @@ import {
   Users,
   PlusCircle,
   CalendarClock,
+  CalendarDays,
   History,
   ArrowUpRight,
   LayoutDashboard,
@@ -113,9 +114,10 @@ export default async function DashboardPage() {
   const { role, id: userId } = session.user;
 
   if (role === "WARGA") {
-    const duesEnabled = false;
     const now = new Date();
-    const [openComplaints, pendingPermits, due] = await Promise.all([
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    const [openComplaints, pendingPermits, due, upcomingEvents, unreadNotifications, myChildren] = await Promise.all([
       prisma.complaint.count({ where: { createdById: userId, status: { not: "RESOLVED" } } }),
       prisma.permit.count({ where: { createdById: userId, status: "PENDING" } }),
       session.user.houseId
@@ -123,13 +125,37 @@ export default async function DashboardPage() {
             where: {
               houseId_year_month: {
                 houseId: session.user.houseId,
-                year: now.getFullYear(),
-                month: now.getMonth() + 1,
+                year,
+                month,
               },
             },
           })
         : null,
+      prisma.event.findMany({
+        where: { eventDate: { gte: now } },
+        orderBy: { eventDate: "asc" },
+        take: 3,
+        select: { id: true, title: true, eventDate: true, location: true },
+      }),
+      prisma.notification.findMany({
+        where: { userId, read: false },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { id: true, title: true, body: true, createdAt: true, url: true },
+      }),
+      prisma.child.findMany({
+        where: { userId },
+        select: { id: true, name: true, isVerified: true },
+      }),
     ]);
+
+    const monthlyDueAmount = await prisma.setting.findUnique({ where: { id: "singleton" } }).then((c) => c?.duesAmount ?? 0);
+
+    const dueLabel = due
+      ? due.isPaid
+        ? "Lunas"
+        : "Belum Bayar"
+      : "Belum Dibuat";
 
     return (
       <div className="space-y-6">
@@ -138,6 +164,36 @@ export default async function DashboardPage() {
         <PerlintasanKeretaStatus />
         <KrlScheduleWidget />
 
+        {/* Ringkasan iuran bulan ini */}
+        <Card className="overflow-hidden">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            <div className="flex items-center gap-3">
+              <div className={`grid size-10 shrink-0 place-items-center rounded-xl ring-1 ring-inset ring-foreground/10 ${
+                due?.isPaid ? "bg-green-500/15 text-green-600 dark:text-green-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              }`}>
+                <Wallet className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">
+                  Kas Bulan Ini ·{" "}
+                  <span className={due?.isPaid ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}>
+                    {dueLabel}
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {due?.isPaid
+                    ? "Terima kasih, pembayaran bulan ini sudah terekam."
+                    : monthlyDueAmount > 0
+                      ? `Belum ada pembayaran ${month} ${year} · Rp ${formatRupiah(monthlyDueAmount)}`
+                      : `Belum ada pembayaran ${month} ${year}.`}
+                </p>
+              </div>
+            </div>
+            <Button size="sm" render={<Link href="/cash/dues/proof-submit">Bayar / Cek Status</Link>} />
+          </CardContent>
+        </Card>
+
+        {/* Stat cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
             href="/complaints"
@@ -153,67 +209,82 @@ export default async function DashboardPage() {
             icon={FileCheck2}
             accent="blue"
           />
-          {duesEnabled && (
-            <StatCard
-              href="/cash/dues"
-              title="Iuran Bulan Ini"
-              value={due ? (due.isPaid ? "Lunas" : "Belum Bayar") : "Belum Dibuat"}
-              icon={Wallet}
-              accent="green"
-            />
-          )}
+          <StatCard
+            href="/posyandu"
+            title="Anak Posyandu"
+            value={String(myChildren.length)}
+            icon={Users}
+            accent="violet"
+          />
         </div>
 
-        {duesEnabled && session.user.houseId && due?.isPaid && (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {/* Acara terdekat */}
           <Card>
-            <CardContent className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 ring-1 ring-inset ring-primary/20">
-                  <CheckCircle2 className="size-5 text-primary" />
+            <CardContent className="space-y-3 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="size-5 text-primary" />
+                  <h2 className="font-semibold tracking-tight">Acara Terdekat</h2>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">Iuran bulan ini sudah lunas</p>
-                  <p className="text-xs text-muted-foreground">
-                    {due.paymentProofUrl
-                      ? "Bukti pembayaran tersimpan."
-                      : "Unggah bukti pembayaran untuk arsip bendahara."}
-                  </p>
-                </div>
+                <Link href="/events" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                  Semua <ArrowUpRight className="size-3.5" />
+                </Link>
               </div>
-              {due.paymentProofUrl ? (
-                <a
-                  href={due.paymentProofUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors hover:border-primary/40 hover:text-primary"
-                >
-                  Lihat Bukti Pembayaran
-                  <ArrowUpRight className="size-4" />
-                </a>
+              {upcomingEvents.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">Belum ada acara mendatang.</p>
               ) : (
-                <form
-                  action={`/api/cash/dues/proof?id=${due.id}`}
-                  method="POST"
-                  encType="multipart/form-data"
-                  className="flex flex-wrap items-center gap-2"
-                >
-                  <input
-                    type="file"
-                    name="file"
-                    accept="image/*,.pdf"
-                    className="block h-9 w-64 cursor-pointer rounded-lg border px-3 text-sm file:mr-2 file:h-7 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:text-sm file:font-medium file:text-primary hover:bg-muted"
-                  />
-                  <button
-                    type="submit"
-                    className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
-                    Upload Bukti
-                  </button>
-                </form>
+                <div className="space-y-2">
+                  {upcomingEvents.map((ev) => (
+                    <Link key={ev.id} href={`/events/${ev.id}`} className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:border-primary/30">
+                      <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                        <CalendarDays className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{ev.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDateTime(ev.eventDate)}
+                          {ev.location ? ` · ${ev.location}` : ""}
+                        </p>
+                      </div>
+                      <ArrowUpRight className="ml-auto size-3.5 shrink-0 text-muted-foreground/40" />
+                    </Link>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
-        )}
+
+          {/* Pengumuman / notifikasi */}
+          <Card>
+            <CardContent className="space-y-3 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <History className="size-5 text-primary" />
+                  <h2 className="font-semibold tracking-tight">Pengumuman Terbaru</h2>
+                </div>
+                <Link href="/notifications" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                  Semua <ArrowUpRight className="size-3.5" />
+                </Link>
+              </div>
+              {unreadNotifications.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">Tidak ada pengumuman belum dibaca.</p>
+              ) : (
+                <div className="space-y-2">
+                  {unreadNotifications.map((n) => (
+                    <Link key={n.id} href={n.url ?? "/notifications"} className="flex items-start gap-3 rounded-lg border p-3 transition-colors hover:border-primary/30">
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{n.title}</p>
+                        <p className="line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           <Button render={<Link href="/complaints/new">Buat Pengaduan</Link>} />
