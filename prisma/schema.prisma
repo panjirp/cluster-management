@@ -525,6 +525,9 @@ model Child {
   nik           String?
   allergies     String?
   photoUrl      String?
+  immunizationsDone String[] @default([]) // imunisasi yang sudah diterima saat daftar
+  vitamins      String?  // vitamin yang sudah diterima
+  notes         String?  // keterangan tambahan dari warga
   isVerified    Boolean  @default(false)
   verifiedBy    User?    @relation("VerifiedChildren", fields: [verifiedById], references: [id])
   verifiedById  String?

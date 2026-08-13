@@ -51,6 +51,10 @@ export default async function AdminPosyanduPage() {
     birthDate: c.birthDate.toISOString(),
     gender: c.gender,
     isVerified: c.isVerified,
+    allergies: c.allergies,
+    immunizationsDone: c.immunizationsDone,
+    vitamins: c.vitamins,
+    notes: c.notes,
     parent: {
       name: c.parent.name,
       house: c.parent.house ? c.parent.house.blockNumber : null,

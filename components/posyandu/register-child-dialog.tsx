@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Baby } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -17,6 +18,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
+export const IMMUNIZATION_OPTIONS = [
+  { value: "HB0", label: "HB0 (0-24 jam)" },
+  { value: "BCG", label: "BCG" },
+  { value: "POLIO_1", label: "Polio 1" },
+  { value: "POLIO_2", label: "Polio 2" },
+  { value: "POLIO_3", label: "Polio 3" },
+  { value: "POLIO_4", label: "Polio 4" },
+  { value: "DPT_1", label: "DPT-HB-Hib 1" },
+  { value: "DPT_2", label: "DPT-HB-Hib 2" },
+  { value: "DPT_3", label: "DPT-HB-Hib 3" },
+  { value: "IPV", label: "IPV" },
+  { value: "CAMPAK", label: "Campak/MR" },
+  { value: "JE", label: "Japanese Encephalitis" },
+];
+
+const VITAMIN_OPTIONS = [
+  { value: "Vitamin A Biru (6-11 bulan)", label: "Vitamin A Biru (6-11 bulan)" },
+  { value: "Vitamin A Merah (12-59 bulan)", label: "Vitamin A Merah (12-59 bulan)" },
+  { value: "Vitamin D", label: "Vitamin D" },
+  { value: "Zinc", label: "Zinc" },
+];
 
 export function RegisterChildDialog({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -31,16 +54,31 @@ export function RegisterChildDialog({ children }: { children: React.ReactNode })
     birthLength: "",
     nik: "",
     allergies: "",
+    vitaminsOther: "",
+    notes: "",
   });
+  const [immunizations, setImmunizations] = useState<string[]>([]);
+  const [vitamins, setVitamins] = useState<string[]>([]);
 
   function reset() {
-    setForm({ name: "", birthDate: "", gender: "", birthWeight: "", birthLength: "", nik: "", allergies: "" });
+    setForm({ name: "", birthDate: "", gender: "", birthWeight: "", birthLength: "", nik: "", allergies: "", vitaminsOther: "", notes: "" });
+    setImmunizations([]);
+    setVitamins([]);
+  }
+
+  function toggle(list: string[], set: (v: string[]) => void, value: string) {
+    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   }
 
   async function handleSubmit() {
     if (!form.name.trim()) { toast.error("Nama anak wajib diisi."); return; }
     if (!form.birthDate) { toast.error("Tanggal lahir wajib diisi."); return; }
     if (!form.gender) { toast.error("Jenis kelamin wajib dipilih."); return; }
+
+    const allVitamins = [
+      ...vitamins,
+      ...(form.vitaminsOther.trim() ? form.vitaminsOther.trim().split(",").map((s) => s.trim()).filter(Boolean) : []),
+    ];
 
     setLoading(true);
     const res = await fetch("/api/posyandu/children", {
@@ -54,6 +92,9 @@ export function RegisterChildDialog({ children }: { children: React.ReactNode })
         birthLength: form.birthLength ? parseFloat(form.birthLength) : undefined,
         nik: form.nik.trim() || undefined,
         allergies: form.allergies.trim() || undefined,
+        immunizationsDone: immunizations,
+        vitamins: allVitamins.join(", ") || undefined,
+        notes: form.notes.trim() || undefined,
       }),
     });
     setLoading(false);
@@ -172,6 +213,56 @@ export function RegisterChildDialog({ children }: { children: React.ReactNode })
               value={form.allergies}
               onChange={(e) => setForm((f) => ({ ...f, allergies: e.target.value }))}
               placeholder="Contoh: telur, kacang"
+            />
+          </div>
+
+          {/* Imunisasi yang sudah diterima */}
+          <div className="space-y-2">
+            <Label>Imunisasi yang Sudah Diterima</Label>
+            <p className="text-xs text-muted-foreground">Centang imunisasi yang sudah pernah didapat anak.</p>
+            <div className="grid grid-cols-2 gap-1.5 rounded-lg border p-3">
+              {IMMUNIZATION_OPTIONS.map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={immunizations.includes(opt.value)}
+                    onCheckedChange={() => toggle(immunizations, setImmunizations, opt.value)}
+                  />
+                  <span className="text-sm">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Vitamin yang sudah diterima */}
+          <div className="space-y-2">
+            <Label>Vitamin yang Sudah Diterima</Label>
+            <div className="grid grid-cols-1 gap-1.5 rounded-lg border p-3">
+              {VITAMIN_OPTIONS.map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={vitamins.includes(opt.value)}
+                    onCheckedChange={() => toggle(vitamins, setVitamins, opt.value)}
+                  />
+                  <span className="text-sm">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <Input
+              value={form.vitaminsOther}
+              onChange={(e) => setForm((f) => ({ ...f, vitaminsOther: e.target.value }))}
+              placeholder="Vitamin lain (pisahkan koma, opsional)"
+            />
+          </div>
+
+          {/* Keterangan */}
+          <div className="space-y-2">
+            <Label htmlFor="child-notes">Keterangan</Label>
+            <Textarea
+              id="child-notes"
+              value={form.notes}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              placeholder="Keterangan tambahan, mis. riwayat kelahiran, kondisi khusus, dll."
+              rows={3}
             />
           </div>
         </div>

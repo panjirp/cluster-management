@@ -32,6 +32,9 @@ const childSchema = z.object({
   nik: z.string().optional(),
   allergies: z.string().optional(),
   photoUrl: z.string().optional(),
+  immunizationsDone: z.array(z.string()).optional(),
+  vitamins: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 // POST /api/posyandu/children — warga mendaftarkan anak
@@ -42,10 +45,14 @@ export async function POST(request: NextRequest) {
   const body = childSchema.safeParse(await request.json());
   if (!body.success) return NextResponse.json({ error: body.error.issues[0]?.message }, { status: 400 });
 
+  const { immunizationsDone, vitamins, notes, ...rest } = body.data;
   const child = await prisma.child.create({
     data: {
-      ...body.data,
-      birthDate: new Date(body.data.birthDate),
+      ...rest,
+      birthDate: new Date(rest.birthDate),
+      immunizationsDone: immunizationsDone ?? [],
+      vitamins: vitamins?.trim() || undefined,
+      notes: notes?.trim() || undefined,
       userId: session.user.id,
     },
   });

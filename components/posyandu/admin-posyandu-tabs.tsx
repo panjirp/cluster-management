@@ -52,6 +52,10 @@ interface SerializedChild {
   birthDate: string;
   gender: string;
   isVerified: boolean;
+  allergies: string | null;
+  immunizationsDone: string[];
+  vitamins: string | null;
+  notes: string | null;
   parent: { name: string; house: string | null };
 }
 
@@ -558,28 +562,45 @@ export function AdminPosyanduTabs({
               </div>
             ) : (
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nama Anak</TableHead>
-                    <TableHead>Orang Tua</TableHead>
-                    <TableHead>Umur</TableHead>
-                    <TableHead>JK</TableHead>
-                    <TableHead>Status Verifikasi</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {childrenList.map((child) => (
-                    <TableRow key={child.id}>
-                      <TableCell className="font-medium">
-                        {child.name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {child.parent.name}
-                        {child.parent.house ? ` (${child.parent.house})` : ""}
-                      </TableCell>
-                      <TableCell>{calcAge(child.birthDate)}</TableCell>
-                      <TableCell>{formatGender(child.gender)}</TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Anak</TableHead>
+                  <TableHead>Orang Tua</TableHead>
+                  <TableHead>Umur</TableHead>
+                  <TableHead>JK</TableHead>
+                  <TableHead>Imunisasi & Vitamin</TableHead>
+                  <TableHead>Status Verifikasi</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {childrenList.map((child) => (
+                  <TableRow key={child.id}>
+                    <TableCell className="font-medium">
+                      {child.name}
+                      {child.allergies && (
+                        <p className="text-xs font-normal text-red-400">⚠️ Alergi: {child.allergies}</p>
+                      )}
+                      {child.notes && (
+                        <p className="text-xs font-normal text-muted-foreground">📝 {child.notes}</p>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {child.parent.name}
+                      {child.parent.house ? ` (${child.parent.house})` : ""}
+                    </TableCell>
+                    <TableCell>{calcAge(child.birthDate)}</TableCell>
+                    <TableCell>{formatGender(child.gender)}</TableCell>
+                    <TableCell>
+                      {child.immunizationsDone.length > 0 ? (
+                        <p className="text-xs">{child.immunizationsDone.map((v) => IMMUNIZATION_OPTIONS.find((o) => o.value === v)?.label ?? v).join(", ")}</p>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                      {child.vitamins && (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400">💊 {child.vitamins}</p>
+                      )}
+                    </TableCell>
                       <TableCell>
                         {child.isVerified ? (
                           <Badge variant="default">Terverifikasi</Badge>
