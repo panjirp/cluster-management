@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireBendahara, UnauthorizedError, ForbiddenError } from "@/lib/session";
 import { sendPushToUsers } from "@/lib/web-push";
@@ -21,23 +22,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Judul dan isi pengumuman wajib diisi." }, { status: 400 });
     }
     const { title, body: message, url } = body.data;
+    const broadcastId = randomUUID();
 
     const targetCount = await prisma.user.count({ where: { role: "WARGA" } });
     if (targetCount === 0) {
       return NextResponse.json({ error: "Belum ada akun warga untuk dikirimi pengumuman." }, { status: 400 });
     }
 
-    const result = await prisma.notification.createMany({
-      data: {
-        userId: session.user.id,
-        title,
-        body: message,
-        url: url ?? null,
-      },
-    });
-    void result;
-
-    // Buat satu notifikasi per warga (createMany butuh array data).
+    // Buat satu notifikasi per warga (kelompok broadcastId sama utk statistik baca)
     const warga = await prisma.user.findMany({ where: { role: "WARGA" }, select: { id: true } });
     await prisma.notification.createMany({
       data: warga.map((w) => ({
@@ -45,6 +37,7 @@ export async function POST(request: NextRequest) {
         title,
         body: message,
         url: url ?? null,
+        broadcastId,
       })),
     });
     // Push: FCM + Web Push ke perangkat semua warga (walau app tertutup)
