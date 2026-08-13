@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, requireAdmin, UnauthorizedError, ForbiddenError } from "@/lib/session";
 import { createEventSchema } from "@/lib/validations/event";
+import { sendPushToUsers } from "@/lib/web-push";
 
 export async function GET() {
   try {
@@ -32,6 +33,15 @@ export async function POST(req: NextRequest) {
     const event = await prisma.event.create({
       data: { ...rest, eventDate: new Date(eventDate), createdById: session.user.id },
     });
+
+    // Push notifikasi acara baru ke semua warga (FCM + Web Push)
+    const warga = await prisma.user.findMany({ where: { role: "WARGA" }, select: { id: true } });
+    const badge = "📅 " + (event.title ?? "Acara Baru");
+    const dateText = new Date(event.eventDate).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    await sendPushToUsers(
+      warga.map((w) => w.id),
+      { title: badge, body: `${dateText}\n${event.description ?? ""}`.trim(), url: `/events/${event.id}` }
+    ).catch(() => {});
 
     return NextResponse.json(event, { status: 201 });
   } catch (error) {
