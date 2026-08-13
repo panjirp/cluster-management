@@ -184,7 +184,7 @@ export default async function DashboardPage() {
                   {due?.isPaid
                     ? "Terima kasih, pembayaran bulan ini sudah terekam."
                     : monthlyDueAmount > 0
-                      ? `Belum ada pembayaran ${month} ${year} · Rp ${formatRupiah(monthlyDueAmount)}`
+                      ? `Belum ada pembayaran ${month} ${year} · ${formatRupiah(monthlyDueAmount)}`
                       : `Belum ada pembayaran ${month} ${year}.`}
                 </p>
               </div>
