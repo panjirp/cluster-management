@@ -22,6 +22,7 @@ import {
   // QrCode, Package — COMING SOON (nav disembunyikan, lihat catatan di bawah)
   Vote,
   Images,
+  Trophy,
   Stethoscope,
   type LucideIcon,
 } from "lucide-react";
@@ -47,6 +48,7 @@ export const mainNavItems: NavItem[] = [
   // { href: "/guest-passes", label: "QR Pass Tamu", icon: QrCode },
   // { href: "/parcels", label: "Titip Paket", icon: Package },
   { href: "/polls", label: "Polling Warga", icon: Vote },
+  { href: "/score", label: "Warga Score", icon: Trophy },
   { href: "/letters", label: "Surat Edaran", icon: FileText },
   { href: "/notifications", label: "Notifikasi", icon: Bell },
   { href: "/emergency", label: "Darurat", icon: Siren },
