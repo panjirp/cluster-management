@@ -8,7 +8,6 @@ import { NavLinks } from "@/components/layout/nav-links";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { InstagramLink } from "@/components/layout/instagram-link";
 import { SupportContact } from "@/components/layout/support-contact";
-import { FantasyLink } from "@/components/layout/fantasy-link";
 import type { Role } from "@/app/generated/prisma/client";
 
 export function MobileNav({
@@ -65,7 +64,6 @@ export function MobileNav({
           <NavLinks role={role} badges={badges} onNavigate={() => setOpen(false)} />
         </nav>
         <div className="flex shrink-0 items-center gap-1 pt-4">
-          <FantasyLink />
           <InstagramLink />
           <SupportContact />
         </div>
