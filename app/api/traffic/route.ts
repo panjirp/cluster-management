@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
 
-// Koordinat: Gerbang Metland ↔ Masjid Jami At-Taqwa (2 arah)
-const POINT_KELUAR = "-6.2580,107.1035"; // Gerbang Metland → Masjid
-const POINT_MASUK = "-6.2585,107.1030";   // Masjid → Gerbang Metland
+// Rute: Daifuku (perlintasan kereta) → Gerbang Metland Telaga Murni
+// Sampling 5 titik di sepanjang ruas jalan (interpolasi linear antar ujung)
+const POINTS = [
+  "-6.26176,107.10085", // Daifuku perlintasan
+  "-6.26069,107.10344",
+  "-6.25962,107.10602",
+  "-6.25854,107.10861",
+  "-6.25747,107.11120", // Gerbang Metland
+];
+
+function getStatus(current: number, free: number, closure: boolean): "lancar" | "sedang" | "macet" {
+  if (closure) return "macet";
+  const ratio = free > 0 ? current / free : 1;
+  if (ratio < 0.5) return "macet";
+  if (ratio < 0.8) return "sedang";
+  return "lancar";
+}
+
+const rank: Record<string, number> = { lancar: 0, sedang: 1, macet: 2 };
 
 export async function GET() {
   const apiKey = process.env.TOMTOM_API_KEY;
@@ -11,50 +27,50 @@ export async function GET() {
   }
 
   try {
-    const [res1, res2] = await Promise.all([
-      fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${apiKey}&point=${POINT_KELUAR}&unit=KMPH`),
-      fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${apiKey}&point=${POINT_MASUK}&unit=KMPH`),
-    ]);
+    const results = await Promise.all(
+      POINTS.map((point) =>
+        fetch(
+          `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=${apiKey}&point=${point}&unit=KMPH`
+        )
+      )
+    );
 
-    if (!res1.ok || !res2.ok) {
+    if (results.some((r) => !r.ok)) {
       return NextResponse.json({ error: "Gagal mengambil data lalu lintas" }, { status: 502 });
     }
 
-    const [d1, d2] = await Promise.all([res1.json(), res2.json()]);
-    const s1 = d1.flowSegmentData;
-    const s2 = d2.flowSegmentData;
+    const datas = await Promise.all(results.map((r) => r.json()));
 
-    function getStatus(current: number, free: number, closure: boolean): "lancar" | "sedang" | "macet" {
-      if (closure) return "macet";
-      const ratio = free > 0 ? current / free : 1;
-      if (ratio < 0.5) return "macet";
-      if (ratio < 0.8) return "sedang";
-      return "lancar";
+    const segs = datas.map((d, i) => {
+      const f = d.flowSegmentData ?? {};
+      return {
+        label: i === 0 ? "Daifuku" : i === POINTS.length - 1 ? "Gerbang Metland" : `S${i}`,
+        currentSpeed: f.currentSpeed ?? 0,
+        freeFlowSpeed: f.freeFlowSpeed ?? 0,
+        status: getStatus(f.currentSpeed ?? 0, f.freeFlowSpeed ?? 0, f.roadClosure),
+      };
+    });
+
+    // Overall = segmen terburuk
+    let overallStatus: "lancar" | "sedang" | "macet" = "lancar";
+    for (const s of segs) {
+      if (rank[s.status] > rank[overallStatus]) overallStatus = s.status;
     }
 
-    const keluar = {
-      dari: "Gerbang Metland",
-      ke: "Masjid Jami At-Taqwa",
-      currentSpeed: s1.currentSpeed,
-      freeFlowSpeed: s1.freeFlowSpeed,
-      status: getStatus(s1.currentSpeed, s1.freeFlowSpeed, s1.roadClosure),
-    };
-
-    const masuk = {
-      dari: "Masjid Jami At-Taqwa",
-      ke: "Gerbang Metland",
-      currentSpeed: s2.currentSpeed,
-      freeFlowSpeed: s2.freeFlowSpeed,
-      status: getStatus(s2.currentSpeed, s2.freeFlowSpeed, s2.roadClosure),
-    };
-
-    const statusOrder = { lancar: 0, sedang: 1, macet: 2 } as const;
-    const overallStatus = statusOrder[keluar.status] >= statusOrder[masuk.status] ? keluar.status : masuk.status;
+    // Kecepatan rata-rata (hanya yang > 0)
+    const speeds = segs.map((s) => s.currentSpeed).filter((v) => v > 0);
+    const avgSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 0;
+    const avgFree = ((arr: number[]) => (arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0))(
+      segs.map((s) => s.freeFlowSpeed).filter((v) => v > 0)
+    );
 
     return NextResponse.json({
       overallStatus,
-      keluar,
-      masuk,
+      dari: "Daifuku",
+      ke: "Gerbang Metland",
+      avgSpeed,
+      avgFree,
+      segments: segs,
       updatedAt: new Date().toISOString(),
     });
   } catch {
