@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, CheckCircle, Loader2, Car, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
-interface Segment {
-  label: string;
+interface Arah {
+  dari: string;
+  ke: string;
   currentSpeed: number;
   freeFlowSpeed: number;
   status: 'lancar' | 'sedang' | 'macet';
@@ -13,15 +14,12 @@ interface Segment {
 
 interface TrafficData {
   overallStatus: 'lancar' | 'sedang' | 'macet';
-  dari: string;
-  ke: string;
-  avgSpeed: number;
-  avgFree: number;
-  segments: Segment[];
+  keluar: Arah;
+  masuk: Arah;
   updatedAt: string;
 }
 
-function StatusBadge({ status, small }: { status: 'lancar' | 'sedang' | 'macet'; small?: boolean }) {
+function StatusBadge({ status }: { status: 'lancar' | 'sedang' | 'macet' }) {
   const c = {
     lancar: { icon: CheckCircle, color: 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950/30', label: 'Lancar' },
     sedang: { icon: Clock, color: 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/30', label: 'Padat' },
@@ -29,14 +27,15 @@ function StatusBadge({ status, small }: { status: 'lancar' | 'sedang' | 'macet';
   }[status];
   const Icon = c.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 font-medium ${small ? 'py-0.5 text-[10px]' : 'py-1 text-xs'} ${c.color}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.color}`}>
       <Icon className="size-3" />{c.label}
     </span>
   );
 }
 
-function Estimasi({ speed, jarak = 1.2 }: { speed: number; jarak?: number }) {
+function Estimasi({ speed }: { speed: number }) {
   if (speed <= 0) return null;
+  const jarak = 1.5; // km
   const mobilMnt = Math.max(1, Math.round((jarak / speed) * 60));
   const motorMnt = Math.max(1, Math.round((jarak / (speed * 0.75)) * 60));
   return (
@@ -83,7 +82,7 @@ export default function TrafficWidget() {
             </div>
             <div className="space-y-1.5">
               <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-              <div className="h-3 w-44 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-40 animate-pulse rounded bg-muted" />
             </div>
           </div>
         </CardContent>
@@ -92,7 +91,6 @@ export default function TrafficWidget() {
   }
 
   const updatedTime = new Date(data.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  const jarak = 1.2; // km antara Daifuku-Metland
 
   return (
     <Card className="overflow-hidden">
@@ -105,41 +103,32 @@ export default function TrafficWidget() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold">Lalu Lintas</p>
-              <p className="text-xs text-muted-foreground truncate">Daifuku → Gerbang Metland</p>
+              <p className="text-xs text-muted-foreground truncate">Gerbang Metland ↔ Masjid At-Taqwa</p>
             </div>
           </div>
           <StatusBadge status={data.overallStatus} />
         </div>
 
-        {/* Kecepatan rata-rata */}
-        <div className="flex items-center justify-between rounded-lg border p-3">
-          <div>
-            <p className="text-2xl font-bold tabular-nums">{data.avgSpeed}</p>
-            <p className="text-[10px] text-muted-foreground">km/j rata-rata</p>
-          </div>
-          <div className="text-right">
-            <StatusBadge status={data.overallStatus} small />
-            <p className="mt-1 text-[10px] text-muted-foreground">Normal {data.avgFree} km/j</p>
-          </div>
-        </div>
-
-        {/* Estimated time */}
-        <Estimasi speed={data.avgSpeed} jarak={jarak} />
-
-        {/* Segmen rute */}
-        <div className="space-y-1.5">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Per Segmen</p>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            {data.segments.map((seg, i) => (
-              <div key={i} className="flex items-center gap-1.5 shrink-0">
-                {i > 0 && <ArrowRight className="size-3 text-muted-foreground/50" />}
-                <div className="rounded-lg border px-2 py-1.5 text-center">
-                  <p className="text-xs font-semibold tabular-nums">{seg.currentSpeed}</p>
-                  <p className="text-[9px] text-muted-foreground">{seg.label}</p>
-                </div>
+        {/* Dua arah */}
+        <div className="grid grid-cols-2 gap-2">
+          {([data.keluar, data.masuk] as Arah[]).map((arah, i) => (
+            <div key={i} className="rounded-lg border p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="font-medium text-foreground truncate">{arah.dari}</span>
+                <ArrowRight className="size-2.5 shrink-0" />
+                <span className="font-medium text-foreground truncate">{arah.ke}</span>
               </div>
-            ))}
-          </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg font-bold tabular-nums">{arah.currentSpeed}</span>
+                <span className="text-[10px] text-muted-foreground">km/j</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">Normal {arah.freeFlowSpeed}</span>
+                <StatusBadge status={arah.status} />
+              </div>
+              <Estimasi speed={arah.currentSpeed} />
+            </div>
+          ))}
         </div>
 
         {/* Footer */}
@@ -152,9 +141,9 @@ export default function TrafficWidget() {
           </button>
         </div>
 
-        {/* Keterangan */}
+        {/* Keterangan monitor */}
         <p className="text-[10px] text-muted-foreground leading-relaxed border-t pt-2.5">
-          Pantau rute dari pintu Daifuku (perlintasan) ke pintu Gerbang Metland, sepanjang ±1,2 km.
+          Hanya monitor 2 ruas jalan dari pintu Gerbang Metland ke Masjid Jami At-Taqwa, dan sebaliknya.
         </p>
       </CardContent>
     </Card>
