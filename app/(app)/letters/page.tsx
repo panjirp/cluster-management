@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { LetterImageCard } from "@/components/letters/letter-image-card";
 
 export const metadata: Metadata = { title: "Surat Edaran" };
 
@@ -70,13 +71,12 @@ export default async function LettersPage() {
                 />
               </CardContent>
               {isImage(letter.filePath) && (
-                <a href={letter.filePath} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={letter.filePath}
-                    alt={letter.title}
-                    className="max-h-56 w-full border-t object-contain bg-black/5"
-                  />
-                </a>
+                <LetterImageCard
+                  src={letter.filePath}
+                  alt={letter.title}
+                  title={letter.title}
+                  date={formatDate(letter.publishedAt)}
+                />
               )}
             </Card>
           ))}
