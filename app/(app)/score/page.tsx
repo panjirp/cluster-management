@@ -123,6 +123,33 @@ export default async function ScorePage() {
         </CardContent>
       </Card>
 
+      {/* Rincian poin saya */}
+      {meScore && (
+        <Card>
+          <CardContent className="space-y-2 py-4">
+            <p className="text-sm font-semibold">Rincian Poin Kamu</p>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-lg border p-2.5">
+                <p className="text-xs text-muted-foreground">💰 Iuran lunas</p>
+                <p className="text-lg font-bold">{meScore.d} <span className="text-xs font-normal text-muted-foreground">× {POINTS.due} = {meScore.d * POINTS.due}</span></p>
+              </div>
+              <div className="rounded-lg border p-2.5">
+                <p className="text-xs text-muted-foreground">📅 Ikut acara</p>
+                <p className="text-lg font-bold">{meScore.e} <span className="text-xs font-normal text-muted-foreground">× {POINTS.event} = {meScore.e * POINTS.event}</span></p>
+              </div>
+              <div className="rounded-lg border p-2.5">
+                <p className="text-xs text-muted-foreground">🗳️ Vote polling</p>
+                <p className="text-lg font-bold">{meScore.p} <span className="text-xs font-normal text-muted-foreground">× {POINTS.poll} = {meScore.p * POINTS.poll}</span></p>
+              </div>
+              <div className="rounded-lg border p-2.5">
+                <p className="text-xs text-muted-foreground">💬 Aktif chat</p>
+                <p className="text-lg font-bold">{meScore.c} <span className="text-xs font-normal text-muted-foreground">poin</span></p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Top 3 podium */}
       <div className="grid grid-cols-3 gap-2">
         {top.map((t, i) => (
@@ -159,7 +186,7 @@ export default async function ScorePage() {
 
       {/* Bagaimana cara dapat poin */}
       <Card>
-        <CardContent className="space-y-2 py-4">
+        <CardContent className="space-y-3 py-4">
           <div className="flex items-center gap-2">
             <Flame className="size-5 text-primary" />
             <h2 className="font-semibold tracking-tight">Cara Dapat Poin</h2>
@@ -177,6 +204,21 @@ export default async function ScorePage() {
             <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2">
               <Star className="size-4 text-amber-600" /> Aktif chat (tiap 5) <b>+{POINTS.chat}</b>
             </div>
+          </div>
+
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+            <p className="font-semibold">ℹ️ Apa itu Warga Score?</p>
+            <p className="mt-1 text-muted-foreground">
+              Warga Score adalah poin penghargaan atas partisipasi aktif warga di cluster. Semakin sering
+              bayar kas tepat waktu, ikut acara, vote, dan aktif berinteraksi, semakin tinggi skor warga
+              sekaligus peringkat blokmu.
+            </p>
+            <p className="mt-2 font-semibold">📌 Catatan</p>
+            <ul className="mt-1 list-inside space-y-1 text-muted-foreground">
+              <li>• Poin iuran dihitung per rumah yang lunas, dibagikan ke warga pemilik rumah itu.</li>
+              <li>• Skor diperbarui otomatis dan bersifat transparan untuk semua warga.</li>
+              <li>• Ini ajang persaingan sehat antar blok — makin aktif, makin solid cluster-nya!</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
