@@ -53,6 +53,17 @@ export default async function CashPage() {
             <Button
               variant="outline"
               render={
+                <a href="/api/cash/transactions/export-excel">
+                  <Download data-icon="inline-start" />
+                  Laporan Excel
+                </a>
+              }
+            />
+          )}
+          {!isWarga && (
+            <Button
+              variant="outline"
+              render={
                 <a href="/api/cash/transactions/export">
                   <Download data-icon="inline-start" />
                   Export CSV
