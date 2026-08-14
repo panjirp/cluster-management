@@ -3,6 +3,7 @@ import { NavLinks } from "@/components/layout/nav-links";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { InstagramLink } from "@/components/layout/instagram-link";
 import { SupportContact } from "@/components/layout/support-contact";
+import { FantasyLink } from "@/components/layout/fantasy-link";
 
 export function Sidebar({
   role,
@@ -18,6 +19,7 @@ export function Sidebar({
         <NavLinks role={role} badges={badges} />
       </div>
       <div className="flex shrink-0 items-center gap-1 pt-4">
+        <FantasyLink />
         <InstagramLink />
         <SupportContact />
       </div>
