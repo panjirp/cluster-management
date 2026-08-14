@@ -23,6 +23,7 @@ import {
   Vote,
   Images,
   Trophy,
+  Flame,
   Stethoscope,
   type LucideIcon,
 } from "lucide-react";
@@ -49,6 +50,7 @@ export const mainNavItems: NavItem[] = [
   // { href: "/parcels", label: "Titip Paket", icon: Package },
   { href: "/polls", label: "Polling Warga", icon: Vote },
   { href: "/score", label: "Warga Score", icon: Trophy },
+  { href: "/fyp", label: "FYP Cluster", icon: Flame },
   { href: "/letters", label: "Surat Edaran", icon: FileText },
   { href: "/notifications", label: "Notifikasi", icon: Bell },
   { href: "/emergency", label: "Darurat", icon: Siren },

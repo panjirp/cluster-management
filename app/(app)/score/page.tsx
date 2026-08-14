@@ -9,6 +9,37 @@ export const metadata: Metadata = { title: "Warga Score" };
 // Skor poin per aktivitas
 const POINTS = { due: 25, event: 15, poll: 5, chat: 10 };
 
+// Level berdasarkan total skor
+const LEVELS = [
+  { min: 0, name: "Warga Baru", icon: "🌱" },
+  { min: 100, name: "Warga Aktif", icon: "🌿" },
+  { min: 250, name: "Warga Pro", icon: "⚡" },
+  { min: 450, name: "Warga Elite", icon: "💎" },
+  { min: 700, name: "Warga Legenda", icon: "👑" },
+];
+
+function getLevel(total: number) {
+  let lvl = LEVELS[0];
+  for (const l of LEVELS) if (total >= l.min) lvl = l;
+  const idx = LEVELS.indexOf(lvl);
+  const next = LEVELS[idx + 1] ?? null;
+  return { ...lvl, next, progress: next ? Math.min(100, Math.round(((total - lvl.min) / (next.min - lvl.min)) * 100)) : 100 };
+}
+
+// Badge yang bisa di-unlock
+function getBadges(s: { d: number; e: number; p: number; c: number }) {
+  const badges = [
+    { got: s.d >= 3, icon: "💰", label: "Pembayar Setia", desc: "Lunas kas ≥ 3 bulan" },
+    { got: s.e >= 3, icon: "🎉", label: "Peserta Acara", desc: "Ikut ≥ 3 acara" },
+    { got: s.c >= 8, icon: "💬", label: "Aktif Ngobrol", desc: "Chat aktif ≥ 40 pesan" },
+    { got: s.p >= 2, icon: "🗳️", label: "Pemilih Cerdas", desc: "Vote ≥ 2 polling" },
+    { got: s.d >= 12 && s.e >= 5, icon: "🏅", label: "Warga Teladan", desc: "Setia bayar + sering hadir" },
+  ];
+  const got = badges.filter((b) => b.got);
+  const locked = badges.filter((b) => !b.got);
+  return { got, locked };
+}
+
 async function computeWargaScores() {
   const [dues, rsvps, votes, chats] = await Promise.all([
     // MonthlyDue berbasis house, bukan user → hitung per rumah
@@ -122,6 +153,57 @@ export default async function ScorePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Level & progress */}
+      {meScore && (() => {
+        const lvl = getLevel(meScore.total);
+        return (
+          <Card>
+            <CardContent className="space-y-3 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{lvl.icon}</span>
+                  <div>
+                    <p className="text-sm font-bold">{lvl.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lvl.next ? `Butuh ${lvl.next.min - meScore.total} poin lagi untuk "${lvl.next.name}"` : "Level tertinggi!"}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-primary">{myRank >= 0 ? `#${myRank + 1}` : "—"}</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-gradient-to-r from-primary to-amber-400 transition-all" style={{ width: `${lvl.progress}%` }} />
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Badge */}
+      {meScore && (() => {
+        const { got, locked } = getBadges(meScore);
+        return (
+          <Card>
+            <CardContent className="space-y-3 py-4">
+              <div className="flex items-center gap-2">
+                <Flame className="size-5 text-primary" />
+                <h2 className="font-semibold tracking-tight">Badge</h2>
+                <span className="text-xs text-muted-foreground">({got.length}/{got.length + locked.length})</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {[...got, ...locked].map((b, i) => (
+                  <div key={i} className={`rounded-lg border p-2.5 text-center ${b.got ? "border-amber-400/40 bg-amber-500/5" : "opacity-50"}`}>
+                    <p className="text-xl">{b.got ? b.icon : "🔒"}</p>
+                    <p className="mt-1 text-xs font-semibold">{b.got ? b.label : "Terkunci"}</p>
+                    <p className="text-[9px] text-muted-foreground">{b.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Rincian poin saya */}
       {meScore && (
