@@ -123,6 +123,8 @@ model User {
   polls              Poll[]
   pollVotes          PollVote[]
   galleryPhotos      GalleryPhoto[]
+  galleryLikes       GalleryLike[]
+  galleryComments    GalleryComment[]
   children           Child[]
   verifiedChildren   Child[]        @relation("VerifiedChildren")
   posyanduSchedules   PosyanduSchedule[]
@@ -509,8 +511,34 @@ model GalleryPhoto {
   uploadedBy   User     @relation(fields: [uploadedById], references: [id])
   uploadedById String
   createdAt    DateTime @default(now())
+  likes        GalleryLike[]
+  comments     GalleryComment[]
 
   @@index([eventId])
+}
+
+model GalleryLike {
+  id        String       @id @default(cuid())
+  photo     GalleryPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  photoId   String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime     @default(now())
+
+  @@unique([photoId, userId])
+  @@index([photoId])
+}
+
+model GalleryComment {
+  id        String       @id @default(cuid())
+  photo     GalleryPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  photoId   String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  content   String
+  createdAt DateTime     @default(now())
+
+  @@index([photoId])
 }
 
 // ── Posyandu Anak ──

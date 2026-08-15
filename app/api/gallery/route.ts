@@ -12,7 +12,7 @@ function errorResponse(error: unknown) {
 // GET /api/gallery — foto galeri (opsional filter eventId)
 export async function GET(req: NextRequest) {
   try {
-    await requireUser();
+    const session = await requireUser();
     const eventId = req.nextUrl.searchParams.get("eventId");
     const photos = await prisma.galleryPhoto.findMany({
       where: eventId ? { eventId } : {},
@@ -20,10 +20,29 @@ export async function GET(req: NextRequest) {
       take: 100,
       include: {
         event: { select: { title: true } },
-        uploadedBy: { select: { name: true } },
+        uploadedBy: { select: { name: true, house: { select: { blockNumber: true } } } },
+        _count: { select: { likes: true, comments: true } },
+        likes: { where: { userId: session.user.id }, select: { id: true } },
+        comments: {
+          orderBy: { createdAt: "desc" },
+          take: 3,
+          include: { user: { select: { name: true } } },
+        },
       },
     });
-    return NextResponse.json(photos);
+    const mapped = photos.map((p) => ({
+      id: p.id,
+      filePath: p.filePath,
+      caption: p.caption,
+      createdAt: p.createdAt,
+      likeCount: p._count.likes,
+      commentCount: p._count.comments,
+      likedByMe: p.likes.length > 0,
+      event: p.event,
+      uploadedBy: p.uploadedBy,
+      comments: p.comments.map((c) => ({ id: c.id, content: c.content, user: c.user.name })),
+    }));
+    return NextResponse.json(mapped);
   } catch (error) {
     return errorResponse(error);
   }

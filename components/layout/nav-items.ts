@@ -21,7 +21,6 @@ import {
   FileText,
   // QrCode, Package — COMING SOON (nav disembunyikan, lihat catatan di bawah)
   Vote,
-  Images,
   Trophy,
   Flame,
   Stethoscope,
@@ -43,7 +42,6 @@ export const mainNavItems: NavItem[] = [
   { href: "/facilities", label: "Fasilitas", icon: Landmark },
   { href: "/directory", label: "Direktori", icon: Contact },
   { href: "/events", label: "Info & Acara", icon: CalendarDays },
-  { href: "/gallery", label: "Galeri Acara", icon: Images },
   // COMING SOON — disembunyikan sampai otomasi boom gate & sosialisasi satpam siap.
   // Kembalikan dua baris di bawah ke mainNavItems saat fitur diaktifkan:
   // { href: "/guest-passes", label: "QR Pass Tamu", icon: QrCode },

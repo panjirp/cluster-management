@@ -16,11 +16,6 @@ type ChatMessage = {
   };
 };
 
-type HouseOption = {
-  id: string;
-  blockNumber: string;
-};
-
 // Tanggal & jam pesan: "14:32" (hari ini), "Kemarin 14:32", atau "9 Agu, 14:32".
 function formatDateTime(dateString: string) {
   const date = new Date(dateString);
@@ -64,25 +59,10 @@ function roleColor(role: string) {
 export default function GroupChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [content, setContent] = useState("");
-  const [selectedHouseId, setSelectedHouseId] = useState<string>("");
-  const [houses, setHouses] = useState<HouseOption[]>([]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const messagesRef = useRef<HTMLDivElement>(null);
   const prevLastIdRef = useRef<string | null>(null);
-
-  // Fetch houses on mount
-  useEffect(() => {
-    fetch("/api/houses")
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw new Error("Failed to load houses");
-      })
-      .then((data: HouseOption[]) => setHouses(data))
-      .catch(() => {
-        // silent
-      });
-  }, []);
 
   // Fetch messages
   const loadMessages = useCallback(async () => {
@@ -240,26 +220,6 @@ export default function GroupChat() {
         onSubmit={handleSubmit}
         className="flex flex-col gap-2 px-4 py-3 border-t"
       >
-        {/* Location selector */}
-        <div className="flex items-center gap-2">
-          <label htmlFor="house-select" className="text-xs text-muted-foreground whitespace-nowrap">
-            Kirim dari
-          </label>
-          <select
-            id="house-select"
-            value={selectedHouseId}
-            onChange={(e) => setSelectedHouseId(e.target.value)}
-            className="h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs outline-none focus:border-ring transition-colors"
-          >
-            <option value="">Umum / Tanpa Lokasi</option>
-            {houses.map((h) => (
-              <option key={h.id} value={h.id}>
-                Blok {h.blockNumber}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="flex gap-2">
           <input
             type="text"
