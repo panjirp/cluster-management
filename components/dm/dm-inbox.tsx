@@ -16,6 +16,8 @@ export function DmInbox({ currentUserId }: { currentUserId: string }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{ id: string; name: string; house: string | null }[]>([]);
 
   const loadThreads = useCallback(async () => {
     try {
@@ -64,14 +66,60 @@ export function DmInbox({ currentUserId }: { currentUserId: string }) {
     }
   }
 
+  // Cari warga untuk mulai chat baru
+  async function searchUsers(q: string) {
+    setSearchQuery(q);
+    if (!q.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(q.trim())}`);
+      if (res.ok) setSearchResults(await res.json());
+    } catch {
+      // silent
+    }
+  }
+
+  function startChat(u: { id: string; name: string; house: string | null }) {
+    setActive({ other: { id: u.id, name: u.name, house: u.house }, last: "", unread: 0 });
+    setMessages([]);
+    setSearchQuery("");
+    setSearchResults([]);
+  }
+
   return (
     <div className="space-y-4">
       {!active ? (
         <>
           <div>
             <h2 className="text-lg font-semibold">Pesan Antar Warga</h2>
-            <p className="text-sm text-muted-foreground">Pilih percakapan untuk mulai chatting.</p>
+            <p className="text-sm text-muted-foreground">Pilih percakapan atau cari warga untuk mulai chat.</p>
           </div>
+
+          {/* Cari warga untuk mulai chat */}
+          <div className="relative">
+            <Input
+              value={searchQuery}
+              onChange={(e) => searchUsers(e.target.value)}
+              placeholder="Cari nama warga untuk chat..."
+            />
+            {searchResults.length > 0 && (
+              <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border bg-popover shadow-lg">
+                {searchResults.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => startChat(u)}
+                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
+                  >
+                    <span className="font-medium">{u.name}</span>
+                    {u.house && <span className="text-xs text-muted-foreground">{u.house}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {loading ? (
             <div className="flex justify-center py-12 text-muted-foreground"><Loader2 className="size-6 animate-spin" /></div>
           ) : threads.length === 0 ? (

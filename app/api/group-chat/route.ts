@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, UnauthorizedError, ForbiddenError } from "@/lib/session";
+import { sendPushToUsers } from "@/lib/web-push";
 
 // GET /api/group-chat — return latest 100 messages
 export async function GET() {
@@ -60,6 +61,40 @@ export async function POST(req: NextRequest) {
         house: { select: { id: true, blockNumber: true } },
       },
     });
+
+    // Deteksi mention @Nama → kirim notifikasi (lonceng + push) ke warga yang di-mention
+    try {
+      const mentionMatches = content.match(/@([A-Za-z0-9 _\-]+)/g) ?? [];
+      const mentionedNames = mentionMatches
+        .map((m) => m.slice(1).trim())
+        .filter((n) => n && n !== session.user.name);
+
+      if (mentionedNames.length > 0) {
+        const mentioned = await prisma.user.findMany({
+          where: { name: { in: mentionedNames }, role: "WARGA" },
+          select: { id: true, name: true },
+        });
+        if (mentioned.length > 0) {
+          const title = `💬 @${message.author.name} mention kamu`;
+          const body = `${content.trim().slice(0, 140)}`;
+          await prisma.notification.createMany({
+            data: mentioned.map((u) => ({
+              userId: u.id,
+              title,
+              body,
+              url: "/chat",
+              broadcastId: null,
+            })),
+          });
+          await sendPushToUsers(
+            mentioned.map((u) => u.id),
+            { title, body, url: "/chat" }
+          ).catch(() => {});
+        }
+      }
+    } catch {
+      // mention notif gagal tidak menghalangi kirim pesan
+    }
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
