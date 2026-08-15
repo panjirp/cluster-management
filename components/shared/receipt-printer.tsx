@@ -268,39 +268,31 @@ export function ReceiptPrinterOutput({
   className,
   ...props
 }: ComponentPropsWithoutRef<"div">) {
-  const { animate, shouldMove, stage } = useReceiptPrinter("ReceiptPrinter.Output");
+  const { animate, stage } = useReceiptPrinter("ReceiptPrinter.Output");
   const isReceiptVisible = stage !== "processing";
-
-  // Struk selalu tampil penuh (tanpa translate naik) supaya tidak terlihat terpotong separo.
   const isComplete = stage === "complete";
 
+  // Animasi "seperti printer": container membuka perlahan (max-height 0 → penuh),
+  // struk muncul dari celah mesin ke bawah tanpa terpotong.
   return (
     <div
       className={cn(
-        "relative z-50 -mt-4 h-auto w-4/5 max-w-full bg-white px-6",
+        "relative z-20 -mt-3 w-4/5 max-w-full overflow-hidden bg-white",
         className,
       )}
       {...props}
     >
-      {isReceiptVisible ? (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-6 -top-1 z-20 h-2 bg-neutral-300 blur-[6px]" />
-      ) : null}
-
       <motion.div
         animate={{
-          opacity: isComplete
-            ? 1
-            : isReceiptVisible
-              ? animate ? 0.96 : 1
-              : 0,
-          transform: "translateY(0%)",
+          maxHeight: isReceiptVisible ? 1000 : 0,
+          opacity: isComplete ? 1 : isReceiptVisible ? 1 : 0,
         }}
-        aria-hidden={!isComplete}
         initial={false}
         transition={{
-          opacity: { duration: animate ? 0.5 : 0, ease: easeOut },
+          maxHeight: { duration: animate ? 3.2 : 0, ease: "easeInOut" },
+          opacity: { duration: animate ? 0.4 : 0 },
         }}
-        className="relative isolate"
+        className="overflow-hidden"
       >
         {children}
       </motion.div>
