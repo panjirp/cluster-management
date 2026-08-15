@@ -137,10 +137,6 @@ export function ReceiptPrinterMachine({
       {...props}
     >
       {children}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-6 bottom-3 z-40 h-2 rounded bg-muted shadow-inner"
-      />
     </div>
   );
 }
