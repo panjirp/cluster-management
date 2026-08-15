@@ -58,6 +58,8 @@ export default async function ProofSubmitPage() {
     );
   }
 
+  const house = await prisma.house.findUnique({ where: { id: houseId } });
+
   // Ambil semua record iuran rumah ini
   const existingDues = await prisma.monthlyDue.findMany({
     where: { houseId },
@@ -155,6 +157,8 @@ export default async function ProofSubmitPage() {
 
       <ProofSubmitClient
         initialDues={displayDues}
+        houseBlock={house?.blockNumber ?? "—"}
+        wargaName={session.user.name ?? "Warga"}
       />
     </div>
   );

@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { PaymentReceipt, type ReceiptData } from '@/components/cash/payment-receipt';
 
 const MONTH_LABELS = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -78,14 +79,19 @@ function SubmitProofDialog({
   dueId,
   monthLabel,
   amount,
+  houseBlock,
+  wargaName,
 }: {
   dueId: string;
   monthLabel: string;
   amount: number;
+  houseBlock: string;
+  wargaName: string;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [note, setNote] = useState('');
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -110,10 +116,16 @@ function SubmitProofDialog({
           return;
         }
 
-        toast.success('Bukti pembayaran berhasil diajukan!');
-        setOpen(false);
+        // Tampilkan animasi struk pembayaran
+        setReceipt({
+          amount,
+          monthLabel,
+          houseBlock,
+          name: wargaName,
+          date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+          refCode: 'BC-' + dueId.slice(0, 6).toUpperCase(),
+        });
         setNote('');
-        window.location.reload();
       } catch {
         toast.error('Terjadi kesalahan. Coba lagi.');
       }
@@ -181,6 +193,21 @@ function SubmitProofDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {/* Dialog struk pembayaran (muncul setelah submit sukses) */}
+      <Dialog open={!!receipt} onOpenChange={(v) => { if (!v) { setReceipt(null); window.location.reload(); } }}>
+        <DialogContent className="sm:max-w-sm overflow-visible rounded-2xl border-0 bg-white p-3 shadow-none">
+          {receipt && <PaymentReceipt data={receipt} />}
+          <div className="mt-2 flex justify-center">
+            <Button
+              onClick={() => { setReceipt(null); window.location.reload(); }}
+              className="px-6"
+            >
+              Selesai
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
@@ -235,7 +262,15 @@ function ProofCard({ proof }: { proof: ProofWithDetails }) {
   );
 }
 
-export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
+export function ProofSubmitClient({
+  initialDues,
+  houseBlock,
+  wargaName,
+}: {
+  initialDues: DueRow[];
+  houseBlock?: string;
+  wargaName?: string;
+}) {
   const [rows] = useState<DueRow[]>(initialDues);
 
   const now = new Date();
@@ -272,6 +307,8 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
               dueId={row.id}
               monthLabel={`${MONTH_LABELS[row.month - 1]} ${row.year}`}
               amount={row.amount}
+              houseBlock={houseBlock ?? '—'}
+              wargaName={wargaName ?? 'Warga'}
             />
           )}
         </TableCell>
@@ -327,6 +364,8 @@ export function ProofSubmitClient({ initialDues }: { initialDues: DueRow[] }) {
                         dueId={row.id}
                         monthLabel={`${MONTH_LABELS[row.month - 1]} ${row.year}`}
                         amount={row.amount}
+                        houseBlock={houseBlock ?? '—'}
+                        wargaName={wargaName ?? 'Warga'}
                       />
                     )}
                   </div>
