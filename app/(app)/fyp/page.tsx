@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { Flame } from "lucide-react";
-import { requireUser } from "@/lib/session";
+import { getSession } from "@/lib/session";
+import { redirect } from "next/navigation";
 import { FypFeed } from "@/components/fyp/fyp-feed";
 
 export const metadata: Metadata = { title: "FYP Cluster" };
 
 export default async function FypPage() {
-  await requireUser();
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const isAdmin = session.user.role === "ADMIN" || session.user.role === "BENDAHARA";
 
   return (
     <div className="space-y-6">
@@ -19,7 +23,7 @@ export default async function FypPage() {
         </p>
       </div>
 
-      <FypFeed />
+      <FypFeed currentUserId={session.user.id} isAdmin={isAdmin} />
     </div>
   );
 }

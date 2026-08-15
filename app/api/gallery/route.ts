@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
       filePath: p.filePath,
       caption: p.caption,
       createdAt: p.createdAt,
+      uploadedById: p.uploadedById,
       likeCount: p._count.likes,
       commentCount: p._count.comments,
       likedByMe: p.likes.length > 0,
