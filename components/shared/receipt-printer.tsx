@@ -268,9 +268,11 @@ export function ReceiptPrinterOutput({
   className,
   ...props
 }: ComponentPropsWithoutRef<"div">) {
-  const { animate, feedMotion, shouldMove, stage } = useReceiptPrinter("ReceiptPrinter.Output");
+  const { animate, shouldMove, stage } = useReceiptPrinter("ReceiptPrinter.Output");
   const isReceiptVisible = stage !== "processing";
-  const shouldUseSteppedFeed = feedMotion === "stepped" && stage === "printing" && shouldMove;
+
+  // Struk selalu tampil penuh (tanpa translate naik) supaya tidak terlihat terpotong separo.
+  const isComplete = stage === "complete";
 
   return (
     <div
@@ -281,30 +283,22 @@ export function ReceiptPrinterOutput({
       {...props}
     >
       {isReceiptVisible ? (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-6 -top-1 z-20 h-2 bg-muted blur-[6px]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-6 -top-1 z-20 h-2 bg-neutral-300 blur-[6px]" />
       ) : null}
 
       <motion.div
         animate={{
-          opacity: isReceiptVisible ? 1 : 0,
-          transform:
-            stage === "printing" && shouldMove
-              ? shouldUseSteppedFeed
-                ? printingTransformKeyframes
-                : "translateY(0%)"
-              : isReceiptVisible || !shouldMove
-                ? "translateY(0%)"
-                : "translateY(calc(-100% + 2px))",
+          opacity: isComplete
+            ? 1
+            : isReceiptVisible
+              ? animate ? 0.96 : 1
+              : 0,
+          transform: "translateY(0%)",
         }}
-        aria-hidden={stage !== "complete"}
+        aria-hidden={!isComplete}
         initial={false}
         transition={{
-          opacity: { duration: animate ? 0.16 : 0, ease: easeOut },
-          transform: {
-            duration: shouldMove ? 3.5 : 0,
-            ease: shouldUseSteppedFeed ? "linear" : easeInOut,
-            times: shouldUseSteppedFeed ? printingKeyframeTimes : undefined,
-          },
+          opacity: { duration: animate ? 0.5 : 0, ease: easeOut },
         }}
         className="relative isolate"
       >
