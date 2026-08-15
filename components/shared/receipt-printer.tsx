@@ -275,7 +275,7 @@ export function ReceiptPrinterOutput({
   return (
     <div
       className={cn(
-        "relative z-50 -mt-4 h-80 w-4/5 max-w-full overflow-hidden bg-white px-6",
+        "relative z-50 -mt-4 min-h-[28rem] w-4/5 max-w-full overflow-hidden bg-white px-6",
         className,
       )}
       {...props}
@@ -301,7 +301,7 @@ export function ReceiptPrinterOutput({
         transition={{
           opacity: { duration: animate ? 0.16 : 0, ease: easeOut },
           transform: {
-            duration: shouldMove ? 1.75 : 0,
+            duration: shouldMove ? 3.5 : 0,
             ease: shouldUseSteppedFeed ? "linear" : easeInOut,
             times: shouldUseSteppedFeed ? printingKeyframeTimes : undefined,
           },

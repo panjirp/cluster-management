@@ -28,11 +28,10 @@ export function PaymentReceipt({ data }: { data: ReceiptData }) {
   const [stage, setStage] = useState<Stage>("processing");
 
   useEffect(() => {
-    const t1 = setTimeout(() => setStage("printing"), 400);
-    const t2 = setTimeout(() => setStage("complete"), 900);
-    const t3 = setTimeout(() => setStage("complete"), 2200);
+    // Timing lebih pelan, seperti mesin cetak sungguhan
+    const t2 = setTimeout(() => setStage("printing"), 1000);
+    const t3 = setTimeout(() => setStage("complete"), 4600);
     return () => {
-      clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
     };
