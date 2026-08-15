@@ -45,6 +45,21 @@ function roleLabel(role: string) {
   }
 }
 
+// Highlight mention @Nama dalam teks pesan
+function renderContent(text: string): React.ReactNode {
+  const parts = text.split(/(@[A-Za-z0-9 _\-]+)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("@") && part.length > 1) {
+      return (
+        <span key={i} className="font-semibold text-primary">
+          {part}
+        </span>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 function roleColor(role: string) {
   switch (role) {
     case "ADMIN":
@@ -61,8 +76,37 @@ export default function GroupChat() {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionSuggestions, setMentionSuggestions] = useState<{ id: string; name: string; house: string | null }[]>([]);
+  const [showMentions, setShowMentions] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
   const prevLastIdRef = useRef<string | null>(null);
+
+  // Cari saran mention saat ketik @
+  const handleContentChange = (val: string) => {
+    setContent(val);
+    const idx = val.lastIndexOf("@");
+    if (idx >= 0) {
+      const after = val.slice(idx + 1);
+      if (!after.includes(" ")) {
+        setMentionQuery(after);
+        setShowMentions(true);
+        fetch(`/api/users/search?q=${encodeURIComponent(after)}`)
+          .then((r) => r.ok && r.json())
+          .then((d) => setMentionSuggestions(d ?? []))
+          .catch(() => {});
+        return;
+      }
+    }
+    setShowMentions(false);
+  };
+
+  const pickMention = (name: string) => {
+    const idx = content.lastIndexOf("@");
+    const newContent = content.slice(0, idx) + "@" + name + " " + content.slice(idx + 1 + mentionQuery.length);
+    setContent(newContent);
+    setShowMentions(false);
+  };
 
   // Fetch messages
   const loadMessages = useCallback(async () => {
@@ -207,7 +251,7 @@ export default function GroupChat() {
                   </span>
                 </div>
                 <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words mt-0.5">
-                  {msg.content}
+                  {renderContent(msg.content)}
                 </p>
               </div>
             </div>
@@ -220,14 +264,29 @@ export default function GroupChat() {
         onSubmit={handleSubmit}
         className="flex flex-col gap-2 px-4 py-3 border-t"
       >
-        <div className="flex gap-2">
+        <div className="relative flex flex-1 gap-2">
           <input
             type="text"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Ketik pesan…"
+            onChange={(e) => handleContentChange(e.target.value)}
+            placeholder="Ketik pesan… (pakai @ untuk mention)"
             className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring transition-colors"
           />
+          {showMentions && mentionSuggestions.length > 0 && (
+            <div className="absolute bottom-full left-0 z-20 mb-1 max-h-48 w-full overflow-y-auto rounded-lg border bg-popover shadow-lg">
+              {mentionSuggestions.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => pickMention(s.name)}
+                  className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
+                >
+                  <span>{s.name}</span>
+                  {s.house && <span className="text-xs text-muted-foreground">{s.house}</span>}
+                </button>
+              ))}
+            </div>
+          )}
           <button
             type="submit"
             disabled={sending || !content.trim()}

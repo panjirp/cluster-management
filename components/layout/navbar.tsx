@@ -5,6 +5,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { GlobalSearch } from "@/components/layout/global-search";
+import { DmButton } from "@/components/layout/dm-button";
 import { Button } from "@/components/ui/button";
 import type { Role } from "@/app/generated/prisma/client";
 
@@ -40,6 +41,7 @@ export function Navbar({
         <Button variant="outline" size="icon-sm" aria-label="Bantuan" render={<Link href="/help" />}>
           <HelpCircle />
         </Button>
+        <DmButton />
         <NotificationBell initialNotifications={notifications} initialUnreadCount={unreadCount} />
         <ThemeToggle />
         <UserMenu name={name} role={role} />
