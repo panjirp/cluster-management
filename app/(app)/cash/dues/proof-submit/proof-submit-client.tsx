@@ -196,7 +196,7 @@ function SubmitProofDialog({
 
       {/* Dialog struk pembayaran (muncul setelah submit sukses) */}
       <Dialog open={!!receipt} onOpenChange={(v) => { if (!v) { setReceipt(null); window.location.reload(); } }}>
-        <DialogContent className="sm:max-w-sm overflow-visible rounded-2xl border-0 bg-white p-3 shadow-none">
+        <DialogContent className="sm:max-w-sm overflow-visible rounded-2xl border-0 bg-background p-3 shadow-none">
           {receipt && <PaymentReceipt data={receipt} />}
           <div className="mt-2 flex justify-center">
             <Button

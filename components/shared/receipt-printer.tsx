@@ -131,7 +131,7 @@ export function ReceiptPrinterMachine({
   return (
     <div
       className={cn(
-        "relative isolate w-full overflow-hidden rounded-2xl border border-neutral-200 bg-white p-3 pb-10 shadow-md",
+        "relative isolate w-full overflow-hidden rounded-2xl border border-border bg-background p-3 pb-10 shadow-sm",
         className,
       )}
       {...props}
@@ -165,7 +165,7 @@ export function ReceiptPrinterScreen({
   return (
     <div
       className={cn(
-        "relative z-10 isolate overflow-hidden rounded-xl border border-neutral-200 bg-white p-4 text-neutral-900 shadow-inner",
+        "relative z-10 isolate overflow-hidden rounded-xl border border-border bg-background p-4 text-foreground",
         className,
       )}
       {...props}
@@ -252,7 +252,7 @@ export function ReceiptPrinterPaper({
   return (
     <article
       className={cn(
-        "relative z-10 min-h-72 bg-white px-6 pb-8 pt-7 font-mono text-neutral-900",
+        "relative z-10 min-h-80 bg-white px-6 pb-10 pt-7 font-mono text-neutral-900",
         className,
       )}
       style={{ clipPath: receiptClipPath, ...style }}
@@ -277,19 +277,19 @@ export function ReceiptPrinterOutput({
   return (
     <div
       className={cn(
-        "relative z-20 -mt-3 w-4/5 max-w-full overflow-hidden bg-white",
+        "relative z-20 w-4/5 max-w-full overflow-hidden bg-transparent",
         className,
       )}
       {...props}
     >
       <motion.div
         animate={{
-          maxHeight: isReceiptVisible ? 1000 : 0,
+          maxHeight: isReceiptVisible ? 2000 : 0,
           opacity: isComplete ? 1 : isReceiptVisible ? 1 : 0,
         }}
         initial={false}
         transition={{
-          maxHeight: { duration: animate ? 3.2 : 0, ease: "easeInOut" },
+          maxHeight: { duration: animate ? 2.6 : 0, ease: "easeInOut" },
           opacity: { duration: animate ? 0.4 : 0 },
         }}
         className="overflow-hidden"
