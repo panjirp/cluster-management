@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, UnauthorizedError } from "@/lib/session";
 import { rsvpSchema } from "@/lib/validations/event";
+import { awardCoveCoin } from "@/lib/covecoin";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,6 +23,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       update: { status: parsed.data.status },
       create: { eventId: id, userId: session.user.id, status: parsed.data.status },
     });
+
+    // Award CoveCoin saat warga menyatakan hadir
+    if (parsed.data.status === "GOING") {
+      await awardCoveCoin(session.user.id, 500, `CoveCoin hadir acara: ${event.title}`).catch(() => {});
+    }
 
     return NextResponse.json(rsvp);
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser, UnauthorizedError, ForbiddenError } from "@/lib/session";
+import { awardCoveCoin } from "@/lib/covecoin";
 
 function errorResponse(error: unknown) {
   if (error instanceof UnauthorizedError) return NextResponse.json({ error: (error as UnauthorizedError).message }, { status: 401 });
@@ -73,6 +74,10 @@ export async function POST(req: NextRequest) {
         uploadedById: session.user.id,
       },
     });
+
+    // Award CoveCoin saat unggah momen
+    await awardCoveCoin(session.user.id, 100, "CoveCoin unggah FYP").catch(() => {});
+
     return NextResponse.json(photo, { status: 201 });
   } catch (error) {
     return errorResponse(error);

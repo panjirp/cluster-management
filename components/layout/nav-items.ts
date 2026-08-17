@@ -23,6 +23,7 @@ import {
   Flame,
   Stethoscope,
   Store,
+  Coins,
   type LucideIcon,
 } from "lucide-react";
 
@@ -68,4 +69,5 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/activity-log", label: "Log Aktivitas", icon: History },
   { href: "/admin/payment-proofs", label: "Review Bukti", icon: FileCheck2 },
   { href: "/admin/posyandu", label: "Posyandu", icon: Stethoscope },
+  { href: "/admin/covecoin", label: "CoveCoin", icon: Coins },
 ];

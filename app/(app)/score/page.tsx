@@ -122,6 +122,13 @@ export default async function ScorePage() {
   const meScore = scores.find((s) => s.id === me.id);
   const top = scores.slice(0, 3);
 
+  // Saldo CoveCoin
+  const coveAgg = await prisma.coveCoinLedger.aggregate({
+    where: { userId: me.id },
+    _sum: { amount: true },
+  });
+  const coveBalance = coveAgg._sum.amount ?? 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -151,6 +158,20 @@ export default async function ScorePage() {
               {me.houseId ? "Warga Terdaftar" : "Warga"}
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Saldo CoveCoin */}
+      <Card className="border-amber-400/40 bg-amber-500/5">
+        <CardContent className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <div className="grid size-11 place-items-center rounded-xl bg-amber-400/20 text-2xl">🪙</div>
+            <div>
+              <p className="text-sm font-semibold">CoveCoin</p>
+              <p className="text-xs text-muted-foreground">1 CoveCoin = Rp 1 · tukarkan lewat pengurus</p>
+            </div>
+          </div>
+          <p className="text-2xl font-bold tabular-nums">{coveBalance}</p>
         </CardContent>
       </Card>
 

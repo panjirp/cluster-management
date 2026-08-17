@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { sendPushToUsers } from "@/lib/web-push";
+import { awardCoveCoinToMany } from "@/lib/covecoin";
 
 const bodySchema = z.object({
   id: z.string(),
@@ -51,6 +52,8 @@ export async function POST(request: NextRequest) {
         body: `Pembayaran iuran ${label} untuk rumah ${due.house.blockNumber} telah disetujui.`,
         url: "/cash/dues/proof-submit",
       }).catch(() => {});
+      // Award CoveCoin (1 CoveCoin = Rp1) setara nominal iuran
+      await awardCoveCoinToMany(residentIds, due.amount, `CoveCoin dari bayar kas ${label}`).catch(() => {});
     } else if (!isPaid && residentIds.length > 0) {
       await sendPushToUsers(residentIds, {
         title: "Iuran Dibatalkan",

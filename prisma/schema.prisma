@@ -128,6 +128,7 @@ model User {
   marketListings     MarketListing[]
   sentMessages       DirectMessage[] @relation("DmSender")
   receivedMessages   DirectMessage[] @relation("DmRecipient")
+  coveCoinLedger     CoveCoinLedger[]
   children           Child[]
   verifiedChildren   Child[]        @relation("VerifiedChildren")
   posyanduSchedules   PosyanduSchedule[]
@@ -182,6 +183,19 @@ model ActivityLog {
   action      String
   description String
   createdAt   DateTime @default(now())
+}
+
+// ── CoveCoin (ekonomi lokal) ──
+model CoveCoinLedger {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  amount      Int      // + = earn, - = spend/redeem
+  type        String   @default("EARN") // EARN, REDEEM, ADJUST
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model House {
