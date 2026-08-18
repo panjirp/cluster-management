@@ -74,4 +74,5 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/payment-proofs", label: "Review Bukti", icon: FileCheck2 },
   { href: "/admin/posyandu", label: "Posyandu", icon: Stethoscope },
   { href: "/admin/covecoin", label: "CoveCoin", icon: Coins },
+  { href: "/admin/access-log", label: "Log Kendaraan", icon: Car },
 ];
