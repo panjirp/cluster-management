@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser, UnauthorizedError, ForbiddenError } from "@/lib/session";
+import { sendPushToUsers } from "@/lib/web-push";
 
 function errorResponse(error: unknown) {
   if (error instanceof UnauthorizedError) return NextResponse.json({ error: error.message }, { status: 401 });
@@ -70,6 +71,16 @@ export async function POST(req: NextRequest) {
         recipient: { select: { id: true, name: true } },
       },
     });
+
+    // Push notifikasi ke penerima (APK + iOS)
+    await sendPushToUsers(
+      [body.data.recipientId],
+      {
+        title: `💬 Pesan dari ${msg.sender.name}`,
+        body: msg.content.slice(0, 140),
+        url: "/dm",
+      }
+    ).catch(() => {});
 
     return NextResponse.json(msg, { status: 201 });
   } catch (error) {
