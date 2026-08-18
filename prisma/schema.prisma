@@ -198,6 +198,36 @@ model CoveCoinLedger {
   @@index([userId, createdAt])
 }
 
+// ── Akses Kendaraan (ANPR / boomgate) ──
+model VehicleRegistration {
+  id          String   @id @default(cuid())
+  house       House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  houseId     String
+  plateNumber String
+  vehicleType String   @default("MOBIL") // MOBIL, MOTOR
+  ownerName   String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@unique([plateNumber])
+  @@index([houseId])
+}
+
+model VehicleAccess {
+  id          String   @id @default(cuid())
+  plateNumber String
+  direction   String   @default("MASUK") // MASUK, KELUAR
+  houseId     String?
+  house       House?   @relation(fields: [houseId], references: [id])
+  isRegistered Boolean @default(false)
+  status      String   @default("DIBUKA") // DIBUKA, DITOLAK
+  gateName    String?
+  createdAt   DateTime @default(now())
+
+  @@index([plateNumber, createdAt])
+  @@index([createdAt])
+}
+
 model House {
   id           String       @id @default(cuid())
   blockNumber  String       @unique
@@ -213,6 +243,8 @@ model House {
   monthlyDues  MonthlyDue[]
   guestPasses  GuestPass[]
   parcels      Parcel[]
+  vehicleRegistrations VehicleRegistration[]
+  vehicleAccesses VehicleAccess[]
   createdAt    DateTime     @default(now())
 }
 

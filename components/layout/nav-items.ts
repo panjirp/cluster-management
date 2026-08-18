@@ -24,6 +24,7 @@ import {
   Stethoscope,
   Store,
   Coins,
+  Rss,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ export type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export const mainNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/feed", label: "Aktivitas", icon: Rss },
   { href: "/chat", label: "Chat Warga", icon: MessageCircle },
   { href: "/complaints", label: "Pengaduan", icon: MessageSquareWarning },
   { href: "/permits", label: "Perizinan", icon: FileCheck2 },
