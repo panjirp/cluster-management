@@ -25,6 +25,7 @@ import {
   Store,
   Coins,
   Rss,
+  Car,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +52,7 @@ export const mainNavItems: NavItem[] = [
   { href: "/score", label: "Warga Score", icon: Trophy },
   { href: "/fyp", label: "FYP Cluster", icon: Flame },
   { href: "/market", label: "Jual Beli Warga", icon: Store },
+  { href: "/kendaraan", label: "Kendaraan", icon: Car },
   { href: "/letters", label: "Surat Edaran", icon: FileText },
   { href: "/notifications", label: "Notifikasi", icon: Bell },
   { href: "/emergency", label: "Darurat", icon: Siren },
