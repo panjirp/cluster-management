@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { computeTotals } from "@/lib/cash";
 import GroupChat from "@/components/chat/group-chat";
 import { WeatherWidget } from "@/components/dashboard/weather-widget";
+import { MusicCard } from "@/components/dashboard/music-card";
 import PerlintasanKeretaStatus from "@/components/widgets/PerlintasanKeretaStatus";
 import KrlScheduleWidget from "@/components/widgets/KrlScheduleWidget";
 
@@ -161,6 +162,7 @@ export default async function DashboardPage() {
       <div className="space-y-6">
         <DashboardHeader name={session.user.name ?? "Warga"} />
         <WeatherWidget />
+        <MusicCard />
         <PerlintasanKeretaStatus />
         <KrlScheduleWidget />
 
@@ -307,6 +309,7 @@ export default async function DashboardPage() {
       <div className="space-y-6">
         <DashboardHeader name={session.user.name ?? "Admin"} />
         <WeatherWidget />
+        <MusicCard />
         <PerlintasanKeretaStatus />
         <KrlScheduleWidget />
 
@@ -391,6 +394,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <DashboardHeader name={session.user.name ?? "Bendahara"} />
       <WeatherWidget />
+      <MusicCard />
       <PerlintasanKeretaStatus />
       <KrlScheduleWidget />
 
